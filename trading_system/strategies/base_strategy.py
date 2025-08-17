@@ -60,7 +60,7 @@ class BaseStrategy(ABC):
         self.results = None
 
     @abstractmethod
-    def calculate_signals(self) -> pd.DataFrame:
+    def calculate_signals(self) -> Dict[str, Any]:
         """
         Calculate buy and sell signals based on the strategy logic.
         Should return a DataFrame with signals (e.g., buy/sell columns).

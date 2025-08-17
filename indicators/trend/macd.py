@@ -27,7 +27,8 @@ def macd_index(
     
     macd_d = ma_fast - ma_slow
     signal = macd_d.ewm(span=signal_period, adjust=False).mean()
-    macd = pd.concat([macd_d, signal], axis=1)
-    macd.columns = ['MACD', 'Signal']
     
-    return macd
+    return pd.DataFrame({
+        'MACD': macd_d,
+        'Signal': signal,
+    })

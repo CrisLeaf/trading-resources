@@ -4,3 +4,6 @@ pyenv3-12/
 workbench/
 
 .github/
+
+
+__pycache__/
