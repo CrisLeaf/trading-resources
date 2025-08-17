@@ -9,6 +9,20 @@ def turtle_trading_channels(
         high_column: str = 'High',
         low_column: str = 'Low'
     ) -> pd.DataFrame:
+    """
+    Calculates the Turtle Trading Channels (TTC) for a given DataFrame.
+    The Turtle Trading Channels are a trend-following breakout system that uses the highest high and lowest low over specified entry and exit periods to generate buy, sell, and exit signals. This indicator helps identify trend initiation and reversal points based on price channel breakouts.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing price data.
+        enter_period (int, optional): Period for calculating the entry channel (highest high/lowest low). Default is 20.
+        exit_period (int, optional): Period for calculating the exit channel (highest high/lowest low). Default is 10.
+        high_column (str, optional): Name of the column containing high prices. Default is 'High'.
+        low_column (str, optional): Name of the column containing low prices. Default is 'Low'.
+
+    Returns:
+        pd.DataFrame: DataFrame with columns for Upper, Lower, Trend Line, Exit Line, Buy Signal, Sell Signal, Buy Exit, Sell Exit, and bar count signals (o1, o2, o3, o4, e1, e2, e3, e4).
+    """
     high, low = df[high_column], df[low_column]
 
     # Entry and exit levels
