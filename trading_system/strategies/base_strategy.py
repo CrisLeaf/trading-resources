@@ -76,7 +76,7 @@ class BaseStrategy(ABC):
         pass
 
     @abstractmethod
-    def optimize(self, params_grid: Dict[str, Any]) -> Dict[str, Any]:
+    def optimize(self, params_grid: Dict[str, Any], n_iter: int) -> Dict[str, Any]:
         """
         Optimize the strategy parameters to maximize performance.
         

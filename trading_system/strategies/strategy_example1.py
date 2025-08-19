@@ -3,11 +3,15 @@ import pandas as pd
 import sys
 sys.path.append('../../indicators')
 from typing import Dict, Any
+import itertools
+import random
 
 from base_strategy import BaseStrategy
 from trend.macd import macd_index
 from momentum.rsi import relative_strength_index
 from volatility.bb import bollinger_bands
+
+from tqdm import tqdm
 
 
 class MACD_RSI_BB_Strategy(BaseStrategy):
@@ -131,10 +135,10 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
         trading_days_per_year = trading_days / years
         mean_return = df['Strategy_Return'].mean()
         std_return = df['Strategy_Return'].std()
-        sharpe = mean_return / std_return * np.sqrt(trading_days_per_year) if std_return != 0 else 0
+        
         total_return = df['Equity_Curve'].iloc[-1] / initial_capital - 1
         cagr = (df['Equity_Curve'].iloc[-1] / initial_capital) ** (1 / years) - 1
-        # sharpe = np.mean(df['Strategy_Return']) / np.std(df['Strategy_Return']) * np.sqrt(252) if df['Strategy_Return'].std() != 0 else 0
+        sharpe = mean_return / std_return * np.sqrt(trading_days_per_year) if std_return != 0 else 0
         rolling_max = df['Equity_Curve'].cummax()
         drawdown = df['Equity_Curve'] / rolling_max - 1
         max_drawdown = drawdown.min()
@@ -148,13 +152,40 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
             'Final Equity': df['Equity_Curve'].iloc[-1],
         }
 
-    def optimize(self, params_grid: Dict[str, Any]) -> Dict[str, Any]:
+    def optimize(self, params_grid: Dict[str, Any], n_iter: int = 100) -> Dict[str, Any]:
         """
         Placeholder: Optimize strategy parameters using the provided grid.
         Returns the best parameters found.
         """
-        # Aquí puedes implementar un bucle de grid search o optimización con tu criterio de performance
-        best_params = self.params  # Temporal, reemplazar con lógica de optimización real
+        keys = list(params_grid.keys())
+        values = list(params_grid.values())
+        all_combinations = list(itertools.product(*values))
+        print('len(all_combinations):', len(all_combinations))
+
+        n_iter = min(n_iter, len(all_combinations))
+        samples_combinations = random.sample(all_combinations, n_iter)
+        
+        best_score = float('-inf')
+        best_params = self.params.copy()
+        
+        for comb in tqdm(samples_combinations):
+            test_params = dict(zip(keys, comb))
+            self.set_params(test_params)
+            self.calculate_signals()
+            perf = self.evaluate_performance()
+            cagr = perf.get('CAGR', 0)
+            cagr = max(cagr, 0)
+            sharpe = perf.get('Sharpe Ratio', 0)
+            sharpe = max(sharpe, 0)
+            max_drawdown = abs(perf.get('Max Drawdown', 0))
+            score = (cagr * sharpe) / (1 + max_drawdown)
+            
+            if score > best_score:
+                best_score = score
+                best_params = self.params.copy()
+
+        print('best score:', best_score)
+
         return best_params
 
     def plot(self, *args, **kwargs):
@@ -184,7 +215,7 @@ if __name__ == "__main__":
     import time
 
     # Obtener Datos
-    df = yf.download('V', start='2025-01-01', end='2025-06-01', interval='1d')
+    df = yf.download('AAPL', start='2022-01-01', end='2025-01-01', interval='1d')
     df.columns = df.columns.droplevel(1)
 
     strategy = MACD_RSI_BB_Strategy(df)
@@ -197,6 +228,35 @@ if __name__ == "__main__":
     # backtest
     performance_dict = strategy.evaluate_performance()
 
-    print(performance_dict)
-
+    print('Total Return:', round(performance_dict['Total Return'], 4))
+    print('CAGR:', round(performance_dict['CAGR'], 4))
+    print('Sharpe Ratio:', round(performance_dict['Sharpe Ratio'], 4))
+    print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
+    print()
     
+    # Optimize
+    params_grid = {
+        'macd_fast_period': np.arange(5, 21, 1).tolist(),
+        'macd_slow_period': np.arange(21, 31, 1).tolist(),
+        'macd_signal_period': np.arange(2, 18, 1).tolist(),
+        'rsi_period': np.arange(7, 22, 1).tolist(),
+        'bb_period': np.arange(16, 26, 1).tolist(),
+        'bb_k': [2.0],
+        'bb_ddof': [0],
+    }
+    
+    best_params = strategy.optimize(params_grid, n_iter=1_000)
+
+    print("Best Parameters:")
+    print(best_params)
+
+    strategy.set_params(best_params)
+    strategy.calculate_signals()
+    performance_dict = strategy.evaluate_performance()
+    
+    print()
+    print('Total Return:', round(performance_dict['Total Return'], 4))
+    print('CAGR:', round(performance_dict['CAGR'], 4))
+    print('Sharpe Ratio:', round(performance_dict['Sharpe Ratio'], 4))
+    print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
+    print()
