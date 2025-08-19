@@ -5,13 +5,14 @@ sys.path.append('../../indicators')
 from typing import Dict, Any
 import itertools
 import random
+from tqdm import tqdm
 
 from base_strategy import BaseStrategy
 from trend.macd import macd_index
 from momentum.rsi import relative_strength_index
 from volatility.bb import bollinger_bands
 
-from tqdm import tqdm
+
 
 
 class MACD_RSI_BB_Strategy(BaseStrategy):
@@ -168,7 +169,7 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
         best_score = float('-inf')
         best_params = self.params.copy()
         
-        for comb in tqdm(samples_combinations):
+        for comb in tqdm(samples_combinations, desc="Optimizing parameters"):
             test_params = dict(zip(keys, comb))
             self.set_params(test_params)
             self.calculate_signals()
@@ -260,3 +261,4 @@ if __name__ == "__main__":
     print('Sharpe Ratio:', round(performance_dict['Sharpe Ratio'], 4))
     print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
     print()
+    
