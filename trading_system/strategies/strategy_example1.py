@@ -6,13 +6,12 @@ from typing import Dict, Any
 import itertools
 import random
 from tqdm import tqdm
+import mplfinance as mpf
 
 from base_strategy import BaseStrategy
 from trend.macd import macd_index
 from momentum.rsi import relative_strength_index
 from volatility.bb import bollinger_bands
-
-
 
 
 class MACD_RSI_BB_Strategy(BaseStrategy):
@@ -99,7 +98,7 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
 
         return current_trend
 
-    def evaluate_performance(self) -> Dict[str, Any]:
+    def evaluate_performance(self, allow_shorts: bool = False) -> Dict[str, Any]:
         """
         Placeholder: Evaluate performance of the strategy.
         Returns a dictionary with metrics like total return, Sharpe ratio, etc.
@@ -118,9 +117,14 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
             if df['Buy_Signal'].iloc[i]:
                 df.loc[df.index[i], 'Position'] = 1
             elif df['Sell_Signal'].iloc[i]:
-                df.loc[df.index[i], 'Position'] = -1
+                if allow_shorts:
+                    df.loc[df.index[i], 'Position'] = -1
+                else:
+                    df.loc[df.index[i], 'Position'] = 0
             else:
                 df.loc[df.index[i], 'Position'] = df['Position'].iloc[i-1]
+        
+        self.data['Position'] = df['Position']
         
         # Returns
         df['Trade_Size'] = df['Position'].diff().abs()
@@ -128,7 +132,13 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
         df['Market_Return'] = df['Close'].pct_change()
         df['Strategy_Return'] = df['Position'].shift(1) * df['Market_Return'] - df['Commission']
         df['Equity_Curve'] = (1 + df['Strategy_Return']).cumprod() * initial_capital
-        
+
+        self.data['Trade_Size'] = df['Trade_Size']
+        self.data['Commission'] = df['Commission']
+        self.data['Market_Return'] = df['Market_Return']
+        self.data['Strategy_Return'] = df['Strategy_Return']
+        self.data['Equity_Curve'] = df['Equity_Curve']
+
         # Metrics
         days = (df.index[-1] - df.index[0]).days
         years = days / 365.25
@@ -161,7 +171,6 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
         keys = list(params_grid.keys())
         values = list(params_grid.values())
         all_combinations = list(itertools.product(*values))
-        print('len(all_combinations):', len(all_combinations))
 
         n_iter = min(n_iter, len(all_combinations))
         samples_combinations = random.sample(all_combinations, n_iter)
@@ -185,38 +194,69 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
                 best_score = score
                 best_params = self.params.copy()
 
-        print('best score:', best_score)
-
         return best_params
+    
+    def save_to_excel(self, filename: str = "strategy_data.xlsx"):
+        """
+        Save the strategy DataFrame to an Excel file.
+        """
+        self.data.to_excel(filename)
 
     def plot(self, *args, **kwargs):
         """
         Placeholder: Plot price + indicators + signals.
         """
-        # initial_capital = 100_000.0
-        # cagr = performance_dict['CAGR']
+        plot_data = self.data.copy()[-kwargs['last_entries']: ]
+        position_diff = plot_data['Position'].diff().fillna(0)
+        position_diff = position_diff.apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
+        
+        buy_entries = plot_data['Close'].astype(float).copy()
+        buy_entries[position_diff != 1] = float('nan')
+        sell_entries = plot_data['Close'].astype(float).copy()
+        sell_entries[position_diff != -1] = float('nan')
+        
+        apds = [
+            mpf.make_addplot(plot_data['Bollinger_Mid'], color='blue'),
+            mpf.make_addplot(
+                buy_entries,
+                type='scatter',
+                markersize=120,
+                marker='^',
+                color='g'
+            ),
+            mpf.make_addplot(
+                sell_entries,
+                type='scatter',
+                markersize=120,
+                marker='v',
+                color='r'
+            ),
+            mpf.make_addplot(plot_data['MACD'], panel=1, color='green', ylabel='MACD', label='MACD'),
+            mpf.make_addplot(plot_data['MACD_Signal'], panel=1, color='red'),
+            mpf.make_addplot(plot_data['RSI'], panel=2, color='purple', ylabel='RSI'),
+            mpf.make_addplot(
+                [50]*len(plot_data), panel=2, color='gray', secondary_y=False, linestyle='dashed'
+            )
+        ]
 
-        # # Calcula los años transcurridos para cada punto
-        # days = (df.index - df.index[0]).days
-        # years = days / 365.25
-        # equity_cagr = initial_capital * (1 + cagr) ** years
+        mpf.plot(
+            plot_data,
+            type='candle',
+            volume=False,
+            addplot=apds,
+            panel_ratios=(3, 1, 1),
+            title='Candlesticks Chart with MACD, RSI and Bollinger Bands',
+            figratio=(20, 10),
+            figscale=1.5,
+        )
 
-        # plt.figure(figsize=(10,6))
-        # plt.plot(df.index, equity_cagr, label=f'Equity at CAGR {cagr:.2%}')
-        # plt.plot(df.index, performance_dict['Equity Curve'], label='Real Equity')
-        # plt.xlabel('Time')
-        # plt.ylabel('Capital')
-        # plt.title('Real Equity vs Ideal CAGR Equity')
-        # plt.legend()
-        # plt.show()
-        pass
     
 if __name__ == "__main__":
     import yfinance as yf
     import time
 
     # Obtener Datos
-    df = yf.download('AAPL', start='2022-01-01', end='2025-01-01', interval='1d')
+    df = yf.download('AAPL', start='2022-01-01', end='2025-08-01', interval='1d')
     df.columns = df.columns.droplevel(1)
 
     strategy = MACD_RSI_BB_Strategy(df)
@@ -237,20 +277,21 @@ if __name__ == "__main__":
     
     # Optimize
     params_grid = {
-        'macd_fast_period': np.arange(5, 21, 1).tolist(),
-        'macd_slow_period': np.arange(21, 31, 1).tolist(),
-        'macd_signal_period': np.arange(2, 18, 1).tolist(),
-        'rsi_period': np.arange(7, 22, 1).tolist(),
-        'bb_period': np.arange(16, 26, 1).tolist(),
+        'macd_fast_period': np.arange(4, 24, 1).tolist(),
+        'macd_slow_period': np.arange(18, 34, 1).tolist(),
+        'macd_signal_period': np.arange(2, 22, 1).tolist(),
+        'rsi_period': np.arange(5, 25, 1).tolist(),
+        'bb_period': np.arange(12, 28, 1).tolist(),
         'bb_k': [2.0],
         'bb_ddof': [0],
     }
     
-    best_params = strategy.optimize(params_grid, n_iter=1_000)
+    best_params = strategy.optimize(params_grid, n_iter=100)
 
     print("Best Parameters:")
     print(best_params)
 
+    # Best Params and Backtest
     strategy.set_params(best_params)
     strategy.calculate_signals()
     performance_dict = strategy.evaluate_performance()
@@ -262,3 +303,8 @@ if __name__ == "__main__":
     print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
     print()
     
+    
+    # Plot
+    strategy.plot(last_entries=5000)
+    
+    strategy.save_to_excel("strategy_data.xlsx")
