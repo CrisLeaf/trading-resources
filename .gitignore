@@ -2,3 +2,13 @@
 
 pyenv3-12/
 workbench/
+
+.github/
+
+
+__pycache__/
+
+
+.DS_Store
+
+*.xlsx
