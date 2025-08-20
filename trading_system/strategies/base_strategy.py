@@ -68,7 +68,7 @@ class BaseStrategy(ABC):
         pass
 
     @abstractmethod
-    def evaluate_performance(self) -> Dict[str, Any]:
+    def evaluate_performance(self, allow_shorts: bool) -> Dict[str, Any]:
         """
         Evaluate the performance of the strategy.
         Should return a dictionary with metrics such as total return, Sharpe ratio, etc.
@@ -87,6 +87,13 @@ class BaseStrategy(ABC):
         """
         pass
     
+    @abstractmethod
+    def save_to_excel(self, filename: str = "strategy_data.xlsx"):
+        """
+        Save the strategy DataFrame to an Excel file.
+        """
+        self.data.to_excel(filename)
+
     @abstractmethod
     def plot(self, *args, **kwargs):
         """
