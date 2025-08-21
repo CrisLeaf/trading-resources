@@ -18,6 +18,34 @@ from indicators.volatility.bb import bollinger_bands
 class MACD_RSI_BB_Strategy(BaseStrategy):
     """
     Strategy combining RSI, Bollinger Bands, and MACD indicators.
+    
+    Buy/Sell Signal Calculation
+    ---------------------------
+    This strategy generates buy and sell signals based on a combination of three technical indicators:
+
+    1. **MACD (Moving Average Convergence Divergence):**
+    - Buy signal: When the MACD line crosses above the MACD signal line.
+    - Sell signal: When the MACD line crosses below the MACD signal line.
+
+    2. **RSI (Relative Strength Index):**
+    - Buy condition: RSI value is below 50 (indicating potential oversold conditions).
+    - Sell condition: RSI value is above 50 (indicating potential overbought conditions).
+
+    3. **Bollinger Bands:**
+    - Buy condition: The closing price is below the middle Bollinger Band.
+    - Sell condition: The closing price is above the middle Bollinger Band.
+
+    **Buy Signal:**  
+    Generated when all the following are true:
+    - MACD > MACD Signal
+    - RSI < 50
+    - Close < Bollinger Middle Band
+
+    **Sell Signal:**  
+    Generated when all the following are true:
+    - MACD < MACD Signal
+    - RSI > 50
+    - Close > Bollinger Middle Band
     """
 
     def __init__(
@@ -217,7 +245,7 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
         sell_entries[position_diff != -1] = float('nan')
         
         apds = [
-            mpf.make_addplot(plot_data['Bollinger_Mid'], color='blue'),
+            mpf.make_addplot(plot_data['Bollinger_Mid'], color='blue', label='Bollinger Mid'),
             mpf.make_addplot(
                 buy_entries,
                 type='scatter',
@@ -233,10 +261,10 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
                 color='r'
             ),
             mpf.make_addplot(plot_data['MACD'], panel=1, color='green', ylabel='MACD', label='MACD'),
-            mpf.make_addplot(plot_data['MACD_Signal'], panel=1, color='red'),
-            mpf.make_addplot(plot_data['RSI'], panel=2, color='purple', ylabel='RSI'),
+            mpf.make_addplot(plot_data['MACD_Signal'], panel=1, color='red', secondary_y=False, label='Signal'),
+            mpf.make_addplot(plot_data['RSI'], panel=2, color='purple', ylabel='RSI', label='RSI'),
             mpf.make_addplot(
-                [50]*len(plot_data), panel=2, color='gray', secondary_y=False, linestyle='dashed'
+                [50]*len(plot_data), panel=2, color='gray', secondary_y=False, linestyle='dashed', label='RSI 50'
             )
         ]
 
@@ -245,10 +273,10 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
             type='candle',
             volume=False,
             addplot=apds,
-            panel_ratios=(3, 1, 1),
+            panel_ratios=(2, 1, 1),
             title='Candlesticks Chart with MACD, RSI and Bollinger Bands',
             figratio=(20, 10),
-            figscale=1.5,
+            figscale=1.5
         )
 
     
@@ -287,7 +315,7 @@ if __name__ == "__main__":
         'bb_ddof': [0],
     }
     
-    best_params = strategy.optimize(params_grid, n_iter=1_000)
+    best_params = strategy.optimize(params_grid, n_iter=10)
 
     print("Best Parameters:")
     print(best_params)
