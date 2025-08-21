@@ -12,7 +12,7 @@ def squeeze_momentum(
         momentum_longitude: int = 6,
         high_column: str = 'High',
         low_column: str = 'Low',
-        column_column: str = 'Close'
+        close_column: str = 'Close'
     ) -> pd.DataFrame:
     """
     Calculates the Squeeze Momentum indicator for a given DataFrame.
@@ -33,7 +33,7 @@ def squeeze_momentum(
     Returns:
         pd.DataFrame: DataFrame with columns for SQZ (momentum), SQZ_ON (squeeze on), SQZ_OFF (squeeze off), and NO_SQZ (no squeeze).
     """
-    high, low, close = df[high_column], df[low_column], df[column_column]
+    high, low, close = df[high_column], df[low_column], df[close_column]
     
     # Bollinger Bands
     rolling = close.rolling(window=bb_period, min_periods=bb_period)
