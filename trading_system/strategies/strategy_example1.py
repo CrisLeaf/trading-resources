@@ -1,17 +1,18 @@
 import numpy as np
 import pandas as pd
-import sys
-sys.path.append('../../indicators')
+import os, sys
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.append(ROOT)
 from typing import Dict, Any
 import itertools
 import random
 from tqdm import tqdm
 import mplfinance as mpf
 
-from base_strategy import BaseStrategy
-from trend.macd import macd_index
-from momentum.rsi import relative_strength_index
-from volatility.bb import bollinger_bands
+from strategies.base_strategy import BaseStrategy
+from indicators.trend.macd import macd_index
+from indicators.momentum.rsi import relative_strength_index
+from indicators.volatility.bb import bollinger_bands
 
 
 class MACD_RSI_BB_Strategy(BaseStrategy):
@@ -196,7 +197,7 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
 
         return best_params
     
-    def save_to_excel(self, filename: str = "strategy_data.xlsx"):
+    def save_to_excel(self, filename: str = "MACD_RSI_BB_Strategy_metrics.xlsx"):
         """
         Save the strategy DataFrame to an Excel file.
         """
