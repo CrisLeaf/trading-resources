@@ -10,42 +10,35 @@ from tqdm import tqdm
 import mplfinance as mpf
 
 from strategies.base_strategy import BaseStrategy
-from indicators.trend.macd import macd_index
-from indicators.momentum.rsi import relative_strength_index
-from indicators.volatility.bb import bollinger_bands
+from indicators.advanced.sqz_m import squeeze_momentum
+from indicators.trend.dmi import directional_movement_index
 
 
-class MACD_RSI_BB_Strategy(BaseStrategy):
+class SQZM_DMI_Strategy(BaseStrategy):
     """
-    Strategy combining RSI, Bollinger Bands, and MACD indicators.
+    Strategy combining Squeeze Momentum and DMI indicators.
     
     Buy/Sell Signal Calculation
     ---------------------------
-    This strategy generates buy and sell signals based on a combination of three technical indicators:
+    This strategy generates buy and sell signals based on a combination of two technical indicators:
 
-    1. **MACD (Moving Average Convergence Divergence):**
-    - Buy signal: When the MACD line crosses above the MACD signal line.
-    - Sell signal: When the MACD line crosses below the MACD signal line.
+    1. **Squeeze Momentum (SQZ):**
+    - Buy condition: SQZ value is greater than 0 (indicating bullish momentum).
+    - Sell condition: SQZ value is less than 0 (indicating bearish momentum).
 
-    2. **RSI (Relative Strength Index):**
-    - Buy condition: RSI value is below 50 (indicating potential oversold conditions).
-    - Sell condition: RSI value is above 50 (indicating potential overbought conditions).
-
-    3. **Bollinger Bands:**
-    - Buy condition: The closing price is below the middle Bollinger Band.
-    - Sell condition: The closing price is above the middle Bollinger Band.
+    2. **Directional Movement Index (DMI):**
+    - Buy condition: +DI is greater than -DI (bullish trend).
+    - Sell condition: +DI is less than -DI (bearish trend).
 
     **Buy Signal:**  
-    Generated when all the following are true:
-    - MACD > MACD Signal
-    - RSI < 50
-    - Close < Bollinger Middle Band
+    Generated when both of the following are true:
+    - SQZ > 0
+    - +DI > -DI
 
     **Sell Signal:**  
-    Generated when all the following are true:
-    - MACD < MACD Signal
-    - RSI > 50
-    - Close > Bollinger Middle Band
+    Generated when both of the following are true:
+    - SQZ < 0
+    - +DI < -DI
     """
 
     def __init__(
@@ -55,17 +48,21 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
             logger: Any = None,
             random_seed: int = None
         ):
-        default_params = {
-            'macd_fast_period': 12,
-            'macd_slow_period': 26,
-            'macd_signal_period': 9,
-            'macd_column': 'Close',
-            'rsi_period': 14,
-            'rsi_column': 'Close',
-            'bb_period': 20,
-            'bb_k': 2.0,
-            'bb_ddof': 0,
-            'bb_column': 'Close',
+        default_params = {    
+            'sqzm_bb_period': 20,
+            'sqzm_bb_std_dev': 2.0,
+            'sqzm_kc_period': 20,
+            'sqzm_kc_mult': 1.5,
+            'sqzm_momentum_period': 12,
+            'sqzm_momentum_longitude': 6,
+            'sqzm_high_column': 'High',
+            'sqzm_low_column': 'Low',
+            'sqzm_close_column': 'Close',
+            'dmi_adx_period': 14,
+            'dmi_di_period': 14,
+            'dmi_high_column': 'High',
+            'dmi_low_column': 'Low',
+            'dmi_close_column': 'Close'
         }
         
         if params:
@@ -75,43 +72,45 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
 
     def calculate_signals(self) -> Dict[str, Any]:
         """
-        Calculate buy/sell signals based on RSI + Bollinger Bands + MACD logic.
+        Calculate buy/sell signals based on Squeeze Momentum + DMI logic.
         Returns a DataFrame with columns: ['Buy_Signal', 'Sell_Signal']
         """
-        macd = macd_index(
+        sqzm = squeeze_momentum(
             df=self.data,
-            fast_period=self.params['macd_fast_period'],
-            slow_period=self.params['macd_slow_period'],
-            signal_period=self.params['macd_signal_period'],
-            column=self.params['macd_column']
+            bb_period=self.params['sqzm_bb_period'],
+            bb_std_dev=self.params['sqzm_bb_std_dev'],
+            kc_period=self.params['sqzm_kc_period'],
+            kc_mult=self.params['sqzm_kc_mult'],
+            momentum_period=self.params['sqzm_momentum_period'],
+            momentum_longitude=self.params['sqzm_momentum_longitude'],
+            high_column=self.params['sqzm_high_column'],
+            low_column=self.params['sqzm_low_column'],
+            close_column=self.params['sqzm_close_column']
         )
-        rsi = relative_strength_index(
+        dmi = directional_movement_index(
             df=self.data,
-            period=self.params['rsi_period'],
-            column=self.params['rsi_column']
+            adx_period=self.params['dmi_adx_period'],
+            di_period=self.params['dmi_di_period'],
+            high_column=self.params['dmi_high_column'],
+            low_column=self.params['dmi_low_column'],
+            close_column=self.params['dmi_close_column']
         )
-        bollinger_bands_dict = bollinger_bands(
-            df=self.data,
-            period=self.params['bb_period'],
-            k=self.params['bb_k'],
-            ddof=self.params['bb_ddof'],
-            column=self.params['bb_column']
-        )
-        self.data['MACD'] = macd['MACD']
-        self.data['MACD_Signal'] = macd['Signal']
-        self.data['RSI'] = rsi
-        self.data['Bollinger_Mid'] = bollinger_bands_dict['Bollinger_Mid']
+        self.data['SQZ'] = sqzm['SQZ']
+        self.data['SQZ_ON'] = sqzm['SQZ_ON']
+        self.data['SQZ_OFF'] = sqzm['SQZ_OFF']
+        self.data['NO_SQZ'] = sqzm['NO_SQZ']
+        self.data['ADX'] = dmi['ADX']
+        self.data['+DI'] = dmi['+DI']
+        self.data['-DI'] = dmi['-DI']
         
         # Signals
         self.data['Buy_Signal'] = (
-            (self.data['MACD'] > self.data['MACD_Signal']) &
-            (self.data['RSI'] < 50) &
-            (self.data['Close'] < self.data['Bollinger_Mid'])
+            (self.data['SQZ'] > 0) & 
+            (self.data['+DI'] > self.data['-DI'])
         )
         self.data['Sell_Signal'] = (
-            (self.data['MACD'] < self.data['MACD_Signal']) &
-            (self.data['RSI'] > 50) &
-            (self.data['Close'] > self.data['Bollinger_Mid'])
+            (self.data['SQZ'] < 0) & 
+            (self.data['+DI'] < self.data['-DI'])
         )
         
         # Direction
@@ -225,7 +224,7 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
 
         return best_params
     
-    def save_to_excel(self, filename: str = "MACD_RSI_BB_Strategy_metrics.xlsx"):
+    def save_to_excel(self, filename: str = "SQZM_DMI_Strategy_metrics.xlsx"):
         """
         Save the strategy DataFrame to an Excel file.
         """
@@ -245,7 +244,6 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
         sell_entries[position_diff != -1] = float('nan')
         
         apds = [
-            mpf.make_addplot(plot_data['Bollinger_Mid'], color='blue', label='Bollinger Mid'),
             mpf.make_addplot(
                 buy_entries,
                 type='scatter',
@@ -260,21 +258,18 @@ class MACD_RSI_BB_Strategy(BaseStrategy):
                 marker='v',
                 color='r'
             ),
-            mpf.make_addplot(plot_data['MACD'], panel=1, color='green', ylabel='MACD', label='MACD'),
-            mpf.make_addplot(plot_data['MACD_Signal'], panel=1, color='red', secondary_y=False, label='Signal'),
-            mpf.make_addplot(plot_data['RSI'], panel=2, color='purple', ylabel='RSI', label='RSI'),
-            mpf.make_addplot(
-                [50]*len(plot_data), panel=2, color='gray', secondary_y=False, linestyle='dashed', label='RSI 50'
-            )
-        ]
+            mpf.make_addplot(plot_data['+DI'], panel=1, color='green', ylabel='DMI', label='+DI'),
+            mpf.make_addplot(plot_data['-DI'], panel=1, color='red', label='-DI', secondary_y=False),
+            mpf.make_addplot(plot_data['SQZ'], panel=2, color='blue', ylabel='SQZ Mom.', type='bar', label='SQZ')
 
+        ]
         mpf.plot(
             plot_data,
             type='candle',
             volume=False,
             addplot=apds,
             panel_ratios=(2, 1, 1),
-            title='Candlesticks Chart with MACD, RSI and Bollinger Bands',
+            title='Candlesticks Chart with Squeeze Momentum and DMI',
             figratio=(20, 10),
             figscale=1.5
         )
@@ -288,7 +283,7 @@ if __name__ == "__main__":
     df = yf.download('AAPL', start='2022-01-01', end='2025-08-01', interval='1d')
     df.columns = df.columns.droplevel(1)
 
-    strategy = MACD_RSI_BB_Strategy(df)
+    strategy = SQZM_DMI_Strategy(df)
     current_trend = strategy.calculate_signals()
 
     print(strategy.data['Direction'].value_counts())
@@ -304,36 +299,37 @@ if __name__ == "__main__":
     print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
     print()
     
-    # Optimize
-    params_grid = {
-        'macd_fast_period': np.arange(4, 24, 1).tolist(),
-        'macd_slow_period': np.arange(18, 34, 1).tolist(),
-        'macd_signal_period': np.arange(2, 22, 1).tolist(),
-        'rsi_period': np.arange(5, 25, 1).tolist(),
-        'bb_period': np.arange(12, 28, 1).tolist(),
-        'bb_k': [2.0],
-        'bb_ddof': [0],
-    }
+    # # Optimize
+    # params_grid = {
+    #     'macd_fast_period': np.arange(4, 24, 1).tolist(),
+    #     'macd_slow_period': np.arange(18, 34, 1).tolist(),
+    #     'macd_signal_period': np.arange(2, 22, 1).tolist(),
+    #     'rsi_period': np.arange(5, 25, 1).tolist(),
+    #     'bb_period': np.arange(12, 28, 1).tolist(),
+    #     'bb_k': [2.0],
+    #     'bb_ddof': [0],
+    # }
     
-    best_params = strategy.optimize(params_grid, n_iter=10)
+    # best_params = strategy.optimize(params_grid, n_iter=1_000)
 
-    print("Best Parameters:")
-    print(best_params)
+    # print("Best Parameters:")
+    # print(best_params)
 
-    # Best Params and Backtest
-    strategy.set_params(best_params)
-    strategy.calculate_signals()
-    performance_dict = strategy.evaluate_performance()
+    # # Best Params and Backtest
+    # strategy.set_params(best_params)
+    # strategy.calculate_signals()
+    # performance_dict = strategy.evaluate_performance()
     
-    print()
-    print('Total Return:', round(performance_dict['Total Return'], 4))
-    print('CAGR:', round(performance_dict['CAGR'], 4))
-    print('Sharpe Ratio:', round(performance_dict['Sharpe Ratio'], 4))
-    print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
-    print()
+    # print()
+    # print('Total Return:', round(performance_dict['Total Return'], 4))
+    # print('CAGR:', round(performance_dict['CAGR'], 4))
+    # print('Sharpe Ratio:', round(performance_dict['Sharpe Ratio'], 4))
+    # print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
+    # print()
     
     
-    # Plot
+    # # Plot
     strategy.plot(last_entries=5000)
     
-    strategy.save_to_excel("strategy_data.xlsx")
+
+    # strategy.save_to_excel()
