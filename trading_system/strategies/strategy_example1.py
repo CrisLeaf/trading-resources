@@ -286,7 +286,7 @@ if __name__ == "__main__":
         'bb_ddof': [0],
     }
     
-    best_params = strategy.optimize(params_grid, n_iter=100)
+    best_params = strategy.optimize(params_grid, n_iter=1_000)
 
     print("Best Parameters:")
     print(best_params)
