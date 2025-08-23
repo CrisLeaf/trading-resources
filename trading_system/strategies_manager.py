@@ -1,4 +1,5 @@
 from strategies.strategy_example1 import MACD_RSI_BB_Strategy
+from strategies.strategy_example2 import SQZM_DMI_Strategy
 
 
 class TradingStrategiesManager:
@@ -17,11 +18,11 @@ class TradingStrategiesManager:
         """
         self.strategies = {
             'MACD_RSI_BB': MACD_RSI_BB_Strategy(**strategy_params.get('MACD_RSI_BB', {})),
-            # Other strategies can be added here
+            'SQZM_DMI': SQZM_DMI_Strategy(**strategy_params.get('SQZM_DMI', {}))
         }
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+        return f'{self.__class__.__name__}()'
 
     def run_strategy(self, strategy_name: str, allow_shorts: bool) -> dict:
         """
@@ -40,8 +41,8 @@ class TradingStrategiesManager:
         strategy = self.strategies.get(strategy_name)
         
         if strategy is None:
-            raise ValueError(f"Strategy '{strategy_name}' not found.")
-        
+            raise ValueError(f'Strategy "{strategy_name}" not found.')
+
         _ = strategy.calculate_signals()
         performance_dict = strategy.evaluate_performance(allow_shorts=allow_shorts)
 
@@ -65,27 +66,45 @@ class TradingStrategiesManager:
         
         for name, _ in self.strategies.items():
             if verbose:
-                print(f"Running {name}...")
+                print(f'Running {name}...')
             
             results[name] = self.run_strategy(name, allow_shorts=allow_shorts)
             
         return results
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import yfinance as yf
-    import time
 
-    df = yf.download("AAPL", start="2022-01-01", end="2025-01-01")
+    df = yf.download('AAPL', start='2022-01-01', end='2025-01-01')
     df.columns = df.columns.droplevel(1)
 
     manager = TradingStrategiesManager(strategy_params={
-        "MACD_RSI_BB": {"data": df}
+        'MACD_RSI_BB': {
+            'data': df,
+            'params': {
+                'macd_fast_period': 12,
+                'macd_slow_period': 26,
+            }
+        },
+        'SQZM_DMI': {
+            'data': df,
+            'params': {
+                'sqzm_bb_period': 20,
+                'sqzm_dmi_period': 14
+            }
+        }
     })
 
-    performance_dict = manager.run_strategy("MACD_RSI_BB", allow_shorts=False)
+    print('Performance for MACD_RSI_BB:')
+    performance_dict = manager.run_strategy('MACD_RSI_BB', allow_shorts=False)
+    print(performance_dict)
+
+    print('Performance for SQZM_DMI:')
+    performance_dict = manager.run_strategy('SQZM_DMI', allow_shorts=False)
     print(performance_dict)
 
     print()
+    print('Running all strategies...')
     all_performances = manager.run_all_strategies(allow_shorts=False)
     print(all_performances)
