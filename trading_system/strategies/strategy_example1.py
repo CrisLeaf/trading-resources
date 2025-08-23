@@ -310,12 +310,10 @@ if __name__ == "__main__":
         'macd_slow_period': np.arange(18, 34, 1).tolist(),
         'macd_signal_period': np.arange(2, 22, 1).tolist(),
         'rsi_period': np.arange(5, 25, 1).tolist(),
-        'bb_period': np.arange(12, 28, 1).tolist(),
-        'bb_k': [2.0],
-        'bb_ddof': [0],
+        'bb_period': np.arange(12, 28, 1).tolist()
     }
     
-    best_params = strategy.optimize(params_grid, n_iter=10)
+    best_params = strategy.optimize(params_grid, n_iter=10_000)
 
     print("Best Parameters:")
     print(best_params)

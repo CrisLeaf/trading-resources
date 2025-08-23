@@ -51,10 +51,10 @@ def directional_movement_index(
     
     # Calculate smoothed sums of TR, +DM, and -DM using Wilder's method
     for i in range(0, int(df.shape[0] - adx_period - 1)):
-        trl.append(trl[i] * factor + tr[adx_period + i + 1])
-        pdml.append(pdml[i] * factor + plus_dm[adx_period + i])
-        mdml.append(mdml[i] * factor + minus_dm[adx_period + i])
-    
+        trl.append(trl[i] * factor + tr.iloc[adx_period + i + 1])
+        pdml.append(pdml[i] * factor + plus_dm.iloc[adx_period + i])
+        mdml.append(mdml[i] * factor + minus_dm.iloc[adx_period + i])
+
     # Calculate +DI and -DI
     pdi = np.array(pdml) / np.array(trl) * 100
     mdi = np.array(mdml) / np.array(trl) * 100

@@ -265,13 +265,13 @@ class SQZM_DMI_Strategy(BaseStrategy):
         ]
         mpf.plot(
             plot_data,
-            type='candle',
+            type='line',
             volume=False,
             addplot=apds,
             panel_ratios=(2, 1, 1),
             title='Candlesticks Chart with Squeeze Momentum and DMI',
             figratio=(20, 10),
-            figscale=1.5
+            figscale=1.5,
         )
 
     
@@ -299,37 +299,36 @@ if __name__ == "__main__":
     print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
     print()
     
-    # # Optimize
-    # params_grid = {
-    #     'macd_fast_period': np.arange(4, 24, 1).tolist(),
-    #     'macd_slow_period': np.arange(18, 34, 1).tolist(),
-    #     'macd_signal_period': np.arange(2, 22, 1).tolist(),
-    #     'rsi_period': np.arange(5, 25, 1).tolist(),
-    #     'bb_period': np.arange(12, 28, 1).tolist(),
-    #     'bb_k': [2.0],
-    #     'bb_ddof': [0],
-    # }
+    # Optimize
+    params_grid = {
+        'sqzm_bb_period': np.arange(10, 31, 1).tolist(),
+        'sqzm_bb_std_dev': [1.5, 2.0, 2.5],
+        'sqzm_kc_period': np.arange(10, 31, 1).tolist(),
+        'sqzm_kc_std_dev': [1.5, 2.0, 2.5],
+        'sqzm_momentum_period': np.arange(5, 21, 1).tolist(),
+        'sqzm_momentum_longitude': np.arange(3, 11, 1).tolist(),
+        'dmi_adx_period': np.arange(10, 21, 1).tolist(),
+        'dmi_di_period': np.arange(10, 21, 1).tolist()
+    }
     
-    # best_params = strategy.optimize(params_grid, n_iter=1_000)
+    best_params = strategy.optimize(params_grid, n_iter=10_000)
 
-    # print("Best Parameters:")
-    # print(best_params)
+    print("Best Parameters:")
+    print(best_params)
 
-    # # Best Params and Backtest
-    # strategy.set_params(best_params)
-    # strategy.calculate_signals()
-    # performance_dict = strategy.evaluate_performance()
+    # Best Params and Backtest
+    strategy.set_params(best_params)
+    strategy.calculate_signals()
+    performance_dict = strategy.evaluate_performance()
     
-    # print()
-    # print('Total Return:', round(performance_dict['Total Return'], 4))
-    # print('CAGR:', round(performance_dict['CAGR'], 4))
-    # print('Sharpe Ratio:', round(performance_dict['Sharpe Ratio'], 4))
-    # print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
-    # print()
+    print()
+    print('Total Return:', round(performance_dict['Total Return'], 4))
+    print('CAGR:', round(performance_dict['CAGR'], 4))
+    print('Sharpe Ratio:', round(performance_dict['Sharpe Ratio'], 4))
+    print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
+    print()
     
-    
-    # # Plot
+    # Plot
     strategy.plot(last_entries=5000)
     
-
-    # strategy.save_to_excel()
+    strategy.save_to_excel()
