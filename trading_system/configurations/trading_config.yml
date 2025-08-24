@@ -1,0 +1,251 @@
+##### Trading System Configuration #####
+
+# Assets Configuration
+assets:
+  currencies:
+    - "EURUSD=X"
+    - "GBPUSD=X"
+    - "USDJPY=X"
+  stocks:
+    - "AAPL"
+    - "GOOGL"
+    - "AMZN"
+  commodities:
+    - "CL=F"
+    - "SI=F"
+    - "NG=F"
+  cryptocurrencies:
+    - "BTC-USD"
+    - "ETH-USD"
+    - "ADA-USD"
+  indices:
+    - "SPY"
+    - "QQQ"
+    - "DAX"
+
+# Timeframes
+timeframes:
+  intraday:
+    - "1m"
+    - "5m"
+    - "15m"
+  daily:
+    - "1d"
+    - "1wk"
+    - "1mo"
+
+# Wait times
+wait_times:
+  1m: 60
+  5m: 300
+  15m: 900
+  1d: 86400
+  1wk: 604800
+  1mo: 2592000
+
+# Download Periods
+download_period:
+  1m: 5d
+  5m: 1mo
+  15m: 1mo
+  1d: 1y
+  1wk: 5y
+  1mo: max
+
+execution:
+  operation_hours:
+    start: "09:30"
+    end: "16:00"
+
+# Strategy parameters
+strategy_parameters:
+  intraday:
+    1m:
+      strategy1:
+        params:
+          macd_fast_period: 12
+          macd_slow_period: 26
+          macd_signal_period: 9
+          macd_column: "Close"
+          rsi_period: 14
+          rsi_column: "Close"
+          bb_period: 20
+          bb_k: 2.0
+          bb_ddof: 0
+          bb_column: "Close"
+      
+      strategy2:
+        params:
+          sqzm_bb_period: 20
+          sqzm_bb_std_dev: 2.0
+          sqzm_kc_period: 20
+          sqzm_kc_mult: 1.5
+          sqzm_momentum_period: 12
+          sqzm_momentum_longitude: 6
+          sqzm_high_column: "High"
+          sqzm_low_column: "Low"
+          sqzm_close_column: "Close"
+          dmi_adx_period: 14
+          dmi_di_period: 14
+          dmi_high_column: "High"
+          dmi_low_column: "Low"
+          dmi_close_column: "Close"
+
+    5m:
+      strategy1:
+        params:
+          macd_fast_period: 12
+          macd_slow_period: 26
+          macd_signal_period: 9
+          macd_column: "Close"
+          rsi_period: 14
+          rsi_column: "Close"
+          bb_period: 20
+          bb_k: 2.0
+          bb_ddof: 0
+          bb_column: "Close"
+      
+      strategy2:
+        params:
+          sqzm_bb_period: 20
+          sqzm_bb_std_dev: 2.0
+          sqzm_kc_period: 20
+          sqzm_kc_mult: 1.5
+          sqzm_momentum_period: 12
+          sqzm_momentum_longitude: 6
+          sqzm_high_column: "High"
+          sqzm_low_column: "Low"
+          sqzm_close_column: "Close"
+          dmi_adx_period: 14
+          dmi_di_period: 14
+          dmi_high_column: "High"
+          dmi_low_column: "Low"
+          dmi_close_column: "Close"
+
+    15m:
+      strategy1:
+        params:
+          macd_fast_period: 12
+          macd_slow_period: 26
+          macd_signal_period: 9
+          macd_column: "Close"
+          rsi_period: 14
+          rsi_column: "Close"
+          bb_period: 20
+          bb_k: 2.0
+          bb_ddof: 0
+          bb_column: "Close"
+      
+      strategy2:
+        params:
+          sqzm_bb_period: 20
+          sqzm_bb_std_dev: 2.0
+          sqzm_kc_period: 20
+          sqzm_kc_mult: 1.5
+          sqzm_momentum_period: 12
+          sqzm_momentum_longitude: 6
+          sqzm_high_column: "High"
+          sqzm_low_column: "Low"
+          sqzm_close_column: "Close"
+          dmi_adx_period: 14
+          dmi_di_period: 14
+          dmi_high_column: "High"
+          dmi_low_column: "Low"
+          dmi_close_column: "Close"
+
+  daily:
+    1d:
+      strategy1:
+        params:
+          macd_fast_period: 12
+          macd_slow_period: 26
+          macd_signal_period: 9
+          macd_column: "Close"
+          rsi_period: 14
+          rsi_column: "Close"
+          bb_period: 20
+          bb_k: 2.0
+          bb_ddof: 0
+          bb_column: "Close"
+      
+      strategy2:
+        params:
+          sqzm_bb_period: 20
+          sqzm_bb_std_dev: 2.0
+          sqzm_kc_period: 20
+          sqzm_kc_mult: 1.5
+          sqzm_momentum_period: 12
+          sqzm_momentum_longitude: 6
+          sqzm_high_column: "High"
+          sqzm_low_column: "Low"
+          sqzm_close_column: "Close"
+          dmi_adx_period: 14
+          dmi_di_period: 14
+          dmi_high_column: "High"
+          dmi_low_column: "Low"
+          dmi_close_column: "Close"
+
+    1wk:
+      strategy1:
+        params:
+          macd_fast_period: 12
+          macd_slow_period: 26
+          macd_signal_period: 9
+          macd_column: "Close"
+          rsi_period: 14
+          rsi_column: "Close"
+          bb_period: 20
+          bb_k: 2.0
+          bb_ddof: 0
+          bb_column: "Close"
+      
+      strategy2:
+        params:
+          sqzm_bb_period: 20
+          sqzm_bb_std_dev: 2.0
+          sqzm_kc_period: 20
+          sqzm_kc_mult: 1.5
+          sqzm_momentum_period: 12
+          sqzm_momentum_longitude: 6
+          sqzm_high_column: "High"
+          sqzm_low_column: "Low"
+          sqzm_close_column: "Close"
+          dmi_adx_period: 14
+          dmi_di_period: 14
+          dmi_high_column: "High"
+          dmi_low_column: "Low"
+          dmi_close_column: "Close"
+
+    1mo:
+      strategy1:
+        params:
+          macd_fast_period: 12
+          macd_slow_period: 26
+          macd_signal_period: 9
+          macd_column: "Close"
+          rsi_period: 14
+          rsi_column: "Close"
+          bb_period: 20
+          bb_k: 2.0
+          bb_ddof: 0
+          bb_column: "Close"
+      
+      strategy2:
+        params:
+          sqzm_bb_period: 20
+          sqzm_bb_std_dev: 2.0
+          sqzm_kc_period: 20
+          sqzm_kc_mult: 1.5
+          sqzm_momentum_period: 12
+          sqzm_momentum_longitude: 6
+          sqzm_high_column: "High"
+          sqzm_low_column: "Low"
+          sqzm_close_column: "Close"
+          dmi_adx_period: 14
+          dmi_di_period: 14
+          dmi_high_column: "High"
+          dmi_low_column: "Low"
+          dmi_close_column: "Close"
+
+
+

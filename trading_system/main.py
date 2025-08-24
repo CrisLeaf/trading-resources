@@ -1,0 +1,47 @@
+import pandas as pd
+from threading import Thread
+import pandas_market_calendars as mcal
+import yaml
+
+import strategies_manager
+
+
+TRADING_CONFIG_PATH = 'configurations/trading_config.yml'
+
+with open(TRADING_CONFIG_PATH, 'r') as f:
+    config = yaml.safe_load(f)
+    
+
+def ensure_ny_timestamp(timestamp: pd.Timestamp) -> pd.Timestamp:
+    if timestamp is None:
+        return pd.Timestamp.now(tz="America/New_York")
+    
+    if timestamp.tzinfo is None:
+        return timestamp.tz_localize("America/New_York")
+    
+    return timestamp.tz_convert("America/New_York")
+
+def is_market_open(
+        calendar: mcal.MarketCalendar,
+        timestamp: pd.Timestamp | None = None
+    ) -> bool:
+    ts = ensure_ny_timestamp(timestamp)
+
+    schedule = calendar.schedule(start_date=ts.date(), end_date=ts.date())
+    
+    if schedule.empty:
+        return False
+    
+    open_time = schedule.iloc[0]['market_open']
+    close_time = schedule.iloc[0]['market_close']
+
+    return open_time <= ts <= close_time
+
+def run():
+    nyse_cal = mcal.get_calendar('NYSE')
+    
+    is_market_open(nyse_cal, None)
+
+
+if __name__ == '__main__':
+    run()
