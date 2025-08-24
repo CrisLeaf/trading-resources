@@ -1,16 +1,13 @@
 import pandas as pd
-from threading import Thread
 import pandas_market_calendars as mcal
 import yaml
 
-import strategies_manager
 
+def load_config(config_path):
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
 
-TRADING_CONFIG_PATH = 'configurations/trading_config.yml'
-
-with open(TRADING_CONFIG_PATH, 'r') as f:
-    config = yaml.safe_load(f)
-    
+    return config
 
 def ensure_ny_timestamp(timestamp: pd.Timestamp) -> pd.Timestamp:
     if timestamp is None:
@@ -36,12 +33,3 @@ def is_market_open(
     close_time = schedule.iloc[0]['market_close']
 
     return open_time <= ts <= close_time
-
-def run():
-    nyse_cal = mcal.get_calendar('NYSE')
-    
-    is_market_open(nyse_cal, None)
-
-
-if __name__ == '__main__':
-    run()
