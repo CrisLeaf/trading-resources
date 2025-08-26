@@ -35,13 +35,13 @@ timeframes:
     - "1mo"
 
 # Wait times
-wait_times:
-  1m: 60
-  5m: 300
-  15m: 900
-  1d: 86400
-  1wk: 604800
-  1mo: 2592000
+wait_time_minutes:
+  1m: 1
+  5m: 3
+  15m: 15
+  1d: 1440
+  1wk: 10080
+  1mo: 43200
 
 # Download Periods
 download_period:
