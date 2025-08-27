@@ -150,3 +150,17 @@ OBV adds or subtracts volume based on price direction. It tracks the cumulative 
 The Volume Oscillator measures the difference between short-term and long-term volume moving averages. It helps identify changes in volume trends and potential strength behind price moves.
 
 ---
+
+
+
+
+# Trading System (Work in Progress)
+
+This section will include the implementation of a complete trading system that ties together indicators, strategies, and risk management.  
+Currently under development, the goal is to provide:  
+
+- **Strategy integration**: Combine multiple technical indicators into rule-based or algorithmic strategies.  
+- **Backtesting**: Evaluate strategy performance with historical market data.  
+- **Risk management**: Apply stop-loss, position sizing, and capital allocation methods.  
+- **Execution layer**: Connect strategies to live or paper trading environments.  
+

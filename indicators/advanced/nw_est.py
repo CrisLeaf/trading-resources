@@ -48,8 +48,6 @@ def nadaraya_watson_estimator(
         )
     )
 
-    direction_estimator = pd.Series(direction_estimator, index=idx, name='Direction_Estimator').shift(-1)
-
     return pd.DataFrame({
         "NW_Estimator": nwe,
         "Direction_Estimator": direction_estimator
