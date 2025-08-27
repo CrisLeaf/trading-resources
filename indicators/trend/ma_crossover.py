@@ -46,4 +46,19 @@ def moving_average_crossover(
     )
     mac.columns = ["SMA_fast", "SMA_slow", "Signal"]
     
+    # Direction
+    direction = pd.Series(index=df.index, dtype=int)
+
+    direction.iloc[0] = 0
+
+    for i in range(1, len(df)):
+        if mac['Signal'].iloc[i] == 1:
+            direction.iloc[i] = 1
+        elif mac['Signal'].iloc[i] == -1:
+            direction.iloc[i] = -1
+        else:
+            direction.iloc[i] = direction.iloc[i-1]
+
+    mac['Direction'] = direction
+    
     return mac

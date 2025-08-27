@@ -28,7 +28,20 @@ def macd_index(
     macd_d = ma_fast - ma_slow
     signal = macd_d.ewm(span=signal_period, adjust=False).mean()
     
+    # Direction
+    direction = pd.Series(index=df.index, dtype=int)
+    direction.iloc[0] = 0
+
+    for i in range(1, len(df)):
+        if macd_d.iloc[i] > signal.iloc[i] and macd_d.iloc[i-1] <= signal.iloc[i-1]:
+            direction.iloc[i] = 1
+        elif macd_d.iloc[i] < signal.iloc[i] and macd_d.iloc[i-1] >= signal.iloc[i-1]:
+            direction.iloc[i] = -1
+        else:
+            direction.iloc[i] = direction.iloc[i-1]
+
     return pd.DataFrame({
         'MACD': macd_d,
         'Signal': signal,
+        'Direction': direction
     })
