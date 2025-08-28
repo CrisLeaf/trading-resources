@@ -72,4 +72,86 @@ def directional_movement_index(
     adxi['-DI'] = mdi
     adx = pd.DataFrame(adx, columns=['ADX'], index=df.index[-len(adx): ])
     
-    return adx.merge(adxi, how='outer', left_index=True, right_index=True)
+    adx_df = adx.merge(adxi, how='outer', left_index=True, right_index=True)
+    
+    adx_df['Direction'] = np.where(
+        adx_df['+DI'] > adx_df['-DI'], 1,
+        np.where(adx_df['+DI'] < adx_df['-DI'], -1, 0)
+    )
+    
+    return adx_df
+
+
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    df = yf.download('USDCLP=X', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
+
+    dmi = directional_movement_index(df)
+    
+    df["Buy_Signal"] = ((dmi["Direction"] == 1) & (dmi["Direction"].shift(1) == -1)).astype(int)
+    df["Sell_Signal"] = ((dmi["Direction"] == -1) & (dmi["Direction"].shift(1) == 1)).astype(int)
+
+    # Plots
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.02,
+        row_heights=[0.7, 0.3]
+    )
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['Close'],
+        mode='lines',
+        line=dict(color='skyblue', width=1),
+        name='Close'
+    ), row=1, col=1)
+    
+    # Signals
+    fig.add_trace(go.Scatter(
+        x=dmi.index,
+        y=dmi['+DI'],
+        mode='lines',
+        line=dict(color='lime', width=1.5),
+        name='+DI'
+    ), row=2, col=1)
+    fig.add_trace(go.Scatter(
+        x=dmi.index,
+        y=dmi['-DI'],
+        mode='lines',
+        line=dict(color='red', width=1.5),
+        name='-DI'
+    ), row=2, col=1)
+    
+    # Buy/Sell Signal
+    fig.add_trace(go.Scatter(
+        x=df.loc[df['Buy_Signal'] == 1].index,
+        y=df.loc[df['Buy_Signal'] == 1]['Close'],
+        mode='markers',
+        marker=dict(symbol='triangle-up', color='lime', size=12),
+        name='Buy Signal'
+    ), row=1, col=1)
+    fig.add_trace(go.Scatter(
+        x=df.loc[df['Sell_Signal'] == 1].index,
+        y=df.loc[df['Sell_Signal'] == 1]['Close'],
+        mode='markers',
+        marker=dict(symbol='triangle-down', color='red', size=12),
+        name='Sell Signal'
+    ), row=1, col=1)
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis2_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=900,
+        width=1000
+    )
+    
+    fig.show()

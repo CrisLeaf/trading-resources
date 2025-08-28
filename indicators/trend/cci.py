@@ -26,7 +26,6 @@ def cci_index(
     Returns:
         pd.Series: A pandas Series containing the CCI values.
     """
-    
     high, low, close = df[high_column], df[low_column], df[close_column]
     tp = (high + low + close) / 3
     tp_rolling = tp.rolling(window=period, min_periods=period)
@@ -35,3 +34,68 @@ def cci_index(
     cci.name = f'CCI_{period}'
     
     return cci
+
+
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    df = yf.download('USDCLP=X', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
+
+    cci = cci_index(df)
+
+    # Plots
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.02,
+        row_heights=[0.7, 0.3]
+    )
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['Close'],
+        mode='lines',
+        line=dict(color='skyblue', width=1),
+        name='Close'
+    ), row=1, col=1)
+    
+    # Signals
+    fig.add_trace(go.Scatter(
+        x=cci.index,
+        y=cci,
+        mode='lines',
+        line=dict(color='white', width=1.5),
+        name='CCI 20'
+    ), row=2, col=1)
+    fig.add_trace(go.Scatter(
+        x=cci.index,
+        y=[100]*len(cci),
+        mode='lines',
+        name='Overbought',
+        line=dict(color='lime', dash='dash')
+    ), row=2, col=1)
+    fig.add_trace(go.Scatter(
+        x=cci.index,
+        y=[-100]*len(cci),
+        mode='lines',
+        name='Oversold',
+        line=dict(color='red', dash='dash')
+    ), row=2, col=1)
+
+    
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis2_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=900,
+        width=1000
+    )
+    
+    fig.show()
