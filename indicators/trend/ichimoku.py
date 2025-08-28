@@ -63,3 +63,82 @@ def ichimoku_cloud(
         ic['Senkou Span B'] = ic['Senkou Span B'].shift(periods=kijun_period)
     
     return ic
+
+
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    df = yf.download('USDCLP=X', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
+
+    ichimoku = ichimoku_cloud(df)
+    
+    above_cloud = df['Close'] > ichimoku[['Senkou Span A', 'Senkou Span B']].max(axis=1)
+    below_cloud = df['Close'] < ichimoku[['Senkou Span A', 'Senkou Span B']].min(axis=1)
+
+    # Cruce Tenkan/Kijun
+    tenkan_cross_up = ichimoku['Tenkan-sen'] > ichimoku['Kijun-sen']
+    tenkan_cross_down = ichimoku['Tenkan-sen'] < ichimoku['Kijun-sen']
+
+    # # Buy Signal
+    # df['Buy_Signal'] = (above_cloud) & (tenkan_cross_up) & (tenkan_cross_up.shift(1) == False)
+    # # Sell Signal
+    # df['Sell_Signal'] = (below_cloud) & (tenkan_cross_down) & (tenkan_cross_down.shift(1) == False)
+
+
+    # Plots
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['Close'],
+        mode='lines',
+        line=dict(color='skyblue', width=1),
+        name='Close'
+    ))
+    fig.add_trace(go.Scatter(
+        x=ichimoku.index,
+        y=ichimoku['Senkou Span A'],
+        mode='lines',
+        line=dict(color='lime', width=2),
+        name='Senkou Span A'
+    ))
+    fig.add_trace(go.Scatter(
+        x=ichimoku.index,
+        y=ichimoku['Senkou Span B'],
+        mode='lines',
+        line=dict(color='red', width=2),
+        name='Senkou Span B'
+    ))
+    fig.add_trace(go.Scatter(
+        x=ichimoku.index,
+        y=ichimoku['Tenkan-sen'],
+        mode='lines',
+        line=dict(color='purple', width=2, dash='dash'),
+        name='Tenkan Sen'
+    ))
+    fig.add_trace(go.Scatter(
+        x=ichimoku.index,
+        y=ichimoku['Kijun-sen'],
+        mode='lines',
+        line=dict(color='orange', width=2, dash='dash'),
+        name='Kijun Sen'
+    ))
+    
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=600,
+        width=1000
+    )
+    
+    fig.show()
+

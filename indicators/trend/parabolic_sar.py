@@ -99,4 +99,57 @@ def parabolic_sar(
         'PSAR': close,
         'UpTrend': psar_up,
         'DownTrend': psar_down
-    })
+    }, index=df.index)
+
+
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+
+    df = yf.download('USDCLP=X', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
+
+    psar = parabolic_sar(df)
+    
+    # Plots
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['Close'],
+        mode='lines',
+        line=dict(color='skyblue', width=1),
+        name='Close'
+    ))
+    # PSAR UpTrend
+    fig.add_trace(go.Scatter(
+        x=psar.index,
+        y=psar['UpTrend'],
+        mode='markers',
+        name='Tendencia Alcista',
+        marker=dict(symbol='circle', color='green', size=8)
+    ))
+
+    # PSAR DownTrend
+    fig.add_trace(go.Scatter(
+        x=psar.index,
+        y=psar['DownTrend'],
+        mode='markers',
+        name='Tendencia Bajista',
+        marker=dict(symbol='circle', color='red', size=8)
+    ))
+
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=600,
+        width=1000
+    )
+    
+    fig.show()
