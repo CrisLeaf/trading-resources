@@ -10,7 +10,8 @@ def volume_oscillator(
     ) -> pd.DataFrame:
     """
     Calculates the Volume Oscillator (VO) for a given DataFrame.
-    The Volume Oscillator measures the difference between two moving averages of volume, helping to identify changes in market activity and potential trend reversals. It consists of the Volume Oscillator line and a signal line.
+    The Volume Oscillator measures the difference between two moving averages of volume, helping to identify changes in
+    market activity and potential trend reversals. It consists of the Volume Oscillator line and a signal line.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing volume data.
@@ -27,6 +28,7 @@ def volume_oscillator(
     vol_fast = volume.ewm(span=fast_period, min_periods=fast_period, adjust=False).mean()
     vol_slow = volume.ewm(span=slow_period, min_periods=slow_period, adjust=False).mean()
 
+
     vo = (vol_fast - vol_slow) / vol_slow * 100
     vo_signal = vo.ewm(span=signal_period, min_periods=signal_period, adjust=False).mean()
     
@@ -36,42 +38,75 @@ def volume_oscillator(
     })
 
 
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
 
-import pandas as pd
-import yfinance as yf
-import matplotlib.pyplot as plt
-from copy import deepcopy
+    df = yf.download('NVDA', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
 
+    vo = volume_oscillator(df)
 
-ticker = 'AAPL'
-df = yf.download(ticker, start='2021-01-01', end='2024-01-01', interval='1d')
-df.columns = df.columns.droplevel(1)
+    # Plots
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.02,
+        row_heights=[0.7, 0.3]
+    )
 
-vo_df = volume_oscillator(
-    df=df,
-    fast_period=12,
-    slow_period=26,
-    signal_period=9
-)
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['Close'],
+        mode='lines',
+        line=dict(color='skyblue', width=1),
+        name='Close'
+    ), row=1, col=1)
 
+    # Signals
+    fig.add_trace(
+        go.Scatter(
+            y=vo['Volume Oscillator'],
+            x=vo.index,
+            mode='lines',
+            line=dict(color='skyblue'),
+            name='Volume Oscillator'
+        ),
+        row=2, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            y=vo['VO Signal'],
+            x=vo.index,
+            mode='lines',
+            line=dict(color='red'),
+            name='VO Signal'
+        ),
+        row=2, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            y=[0] * len(vo),
+            x=vo.index,
+            mode='lines',
+            line=dict(color='grey', dash='dash'),
+            name='0 line'
+        ),
+        row=2, col=1
+    )
 
-subdf = df.iloc[-150: ]
-subvo_df = vo_df.iloc[-150: ]
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=900,
+        width=1000
+    )
 
-plt.figure(figsize=(14, 7))
-plt.subplot(2, 1, 1)
-plt.plot(subdf.index, subdf["Volume"], label="Volumen", color="coral")
-plt.title("Volumen de: " + ticker)
-plt.grid(True)
-plt.legend()
-
-plt.subplot(2, 1, 2)
-plt.plot(subvo_df.index, subvo_df["Volume Oscillator"], label="Oscilador de Volumen", color="blue")
-plt.plot(subvo_df.index, subvo_df["VO Signal"], label="Señal", color="red", linestyle="--")
-plt.axhline(y=0, color="green", linestyle="--", linewidth=1.5)
-plt.title("Oscilador de Volumen de: " + ticker)
-plt.grid(True)
-plt.legend()
-
-plt.tight_layout()
-plt.show()
+    fig.show()
