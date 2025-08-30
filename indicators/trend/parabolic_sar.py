@@ -130,7 +130,7 @@ if __name__ == '__main__':
         x=psar.index,
         y=psar['UpTrend'],
         mode='markers',
-        name='Tendencia Alcista',
+        name='Bullish trend',
         marker=dict(symbol='circle', color='green', size=8)
     ))
 
@@ -139,7 +139,7 @@ if __name__ == '__main__':
         x=psar.index,
         y=psar['DownTrend'],
         mode='markers',
-        name='Tendencia Bajista',
+        name='Bearish trend',
         marker=dict(symbol='circle', color='red', size=8)
     ))
 
