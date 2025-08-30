@@ -8,7 +8,8 @@ def relative_strength_index(
     ) -> pd.Series:
     """
     Calculates the Relative Strength Index (RSI) for a given DataFrame.
-    The RSI is a momentum oscillator that measures the speed and change of price movements. It is used to identify overbought or oversold conditions in the price of an asset, helping traders determine potential reversal points.
+    The RSI is a momentum oscillator that measures the speed and change of price movements. It is used to identify
+    overbought or oversold conditions in the price of an asset, helping traders determine potential reversal points.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.

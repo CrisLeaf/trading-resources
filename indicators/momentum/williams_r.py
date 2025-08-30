@@ -10,7 +10,9 @@ def williams_percentage_range(
     ) -> pd.Series:
     """
     Calculates the Williams %R indicator for a given DataFrame.
-    Williams %R is a momentum oscillator that measures overbought and oversold levels, indicating potential reversal points in the price of an asset. It compares the current closing price to the highest high and lowest low over a specified period.
+    Williams %R is a momentum oscillator that measures overbought and oversold levels, indicating potential reversal
+    points in the price of an asset. It compares the current closing price to the highest high and lowest low over a
+    specified period.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.

@@ -11,7 +11,9 @@ def stochastic_rsi(
     ) -> pd.DataFrame:
     """
     Calculates the Stochastic Relative Strength Index (StochRSI) for a given DataFrame.
-    The StochRSI is a momentum oscillator that applies the Stochastic formula to the Relative Strength Index (RSI) values, making it more sensitive and responsive to price changes. It is used to identify overbought and oversold conditions, as well as potential trend reversals.
+    The StochRSI is a momentum oscillator that applies the Stochastic formula to the Relative Strength Index (RSI)
+    values, making it more sensitive and responsive to price changes. It is used to identify overbought and oversold
+    conditions, as well as potential trend reversals.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
