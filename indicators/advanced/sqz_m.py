@@ -16,7 +16,9 @@ def squeeze_momentum(
     ) -> pd.DataFrame:
     """
     Calculates the Squeeze Momentum indicator for a given DataFrame.
-    The Squeeze Momentum indicator combines Bollinger Bands and Keltner Channels to identify periods of low volatility ("squeeze") and potential breakouts. It also calculates a momentum value to help determine the direction of the breakout.
+    The Squeeze Momentum indicator combines Bollinger Bands and Keltner Channels to identify periods of low volatility
+    ("squeeze") and potential breakouts. It also calculates a momentum value to help determine the direction of the
+    breakout.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
@@ -31,7 +33,8 @@ def squeeze_momentum(
         column_column (str, optional): Name of the column containing close prices. Default is 'Close'.
 
     Returns:
-        pd.DataFrame: DataFrame with columns for SQZ (momentum), SQZ_ON (squeeze on), SQZ_OFF (squeeze off), and NO_SQZ (no squeeze).
+        pd.DataFrame: DataFrame with columns for SQZ (momentum), SQZ_ON (squeeze on), SQZ_OFF (squeeze off), and
+                      NO_SQZ (no squeeze).
     """
     high, low, close = df[high_column], df[low_column], df[close_column]
     
@@ -74,3 +77,61 @@ def squeeze_momentum(
         'SQZ_OFF': sqz_off,
         'NO_SQZ': no_sqz
     }, index=df.index)
+
+
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    df = yf.download('USDCLP=X', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
+
+    sqz_m = squeeze_momentum(df)
+
+    # Plots
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.02,
+        row_heights=[0.7, 0.3]
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=df['Close'],
+            mode='lines',
+            line=dict(color='skyblue', width=1),
+            name='Close'
+        ), row=1, col=1
+    )
+
+    # Signals
+    colors = ['green' if val > 0 else 'red' for val in sqz_m['SQZ']]
+
+    fig.add_trace(
+        go.Bar(
+            x=sqz_m.index,
+            y=sqz_m['SQZ'],
+            marker_color=colors,
+            showlegend=False,
+        ),
+        row=2, col=1
+    )
+
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis2_title='Date',
+        yaxis_title='Price',
+        yaxis2_title='SQZ Momentum',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=900,
+        width=1000
+    )
+
+    fig.show()
+

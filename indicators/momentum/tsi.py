@@ -90,7 +90,7 @@ if __name__ == '__main__':
     fig.update_layout(
         template='plotly_dark',
         title='Signals Plot',
-        xaxis_title='Date',
+        xaxis2_title='Date',
         yaxis_title='Price',
         xaxis_rangeslider_visible=False,
         plot_bgcolor='rgb(20, 20, 20)',

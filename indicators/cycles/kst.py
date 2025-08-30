@@ -16,7 +16,8 @@ def know_sure_thing(
     ) -> pd.DataFrame:
     """
     Calculates the Know Sure Thing (KST) indicator for a given DataFrame.
-    The KST is a momentum oscillator that combines multiple rate-of-change (ROC) calculations smoothed over different periods. It helps identify major price cycle turns and provides buy or sell signals using its signal line.
+    The KST is a momentum oscillator that combines multiple rate-of-change (ROC) calculations smoothed over different
+    periods. It helps identify major price cycle turns and provides buy or sell signals using its signal line.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
@@ -52,3 +53,67 @@ def know_sure_thing(
         'KST': kst,
         'KST_signal': kst_signal
     })
+
+
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    df = yf.download('USDCLP=X', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
+
+    kst = know_sure_thing(df)
+
+    # Plots
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.02,
+        row_heights=[0.7, 0.3]
+    )
+
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['Close'],
+        mode='lines',
+        line=dict(color='skyblue', width=1),
+        name='Close'
+    ), row=1, col=1)
+
+    # Signals
+    fig.add_trace(
+        go.Scatter(
+            y=kst['KST'],
+            x=kst.index,
+            mode='lines',
+            line=dict(color='skyblue'),
+            name='KST'
+        ),
+        row=2, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            y=kst['KST_signal'],
+            x=kst.index,
+            mode='lines',
+            line=dict(color='coral'),
+            name='Signal'
+        ),
+        row=2, col=1
+    )
+
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis2_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=900,
+        width=1000
+    )
+
+    fig.show()
