@@ -7,7 +7,9 @@ def exponential_moving_average(
         column: str = 'Close'
     ) -> pd.Series:
     """
-    The Exponential Moving Average (EMA) is a type of moving average that gives more weight to recent data points, making it more responsive to new information compared to the Simple Moving Average (SMA). It is commonly used in time series analysis and financial markets to smooth out price data and identify trends more quickly.
+    The Exponential Moving Average (EMA) is a type of moving average that gives more weight to recent data points,
+    making it more responsive to new information compared to the Simple Moving Average (SMA). It is commonly used in
+    time series analysis and financial markets to smooth out price data and identify trends more quickly.
 
     Args:
         df (pd.DataFrame): The input DataFrame containing the data.

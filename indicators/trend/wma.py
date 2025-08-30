@@ -8,7 +8,8 @@ def weighted_moving_average(
     ) -> pd.Series:
     """
         Calculates the Weighted Moving Average (WMA) for a specified column in a pandas DataFrame.
-        The WMA assigns more weight to recent data points, making it more responsive to new information compared to a simple moving average.
+        The WMA assigns more weight to recent data points, making it more responsive to new information compared to a
+        simple moving average.
         
         Args:
             df (pd.DataFrame): The input DataFrame containing the data.

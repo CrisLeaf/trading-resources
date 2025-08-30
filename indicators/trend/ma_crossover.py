@@ -10,7 +10,8 @@ def moving_average_crossover(
     ) -> pd.DataFrame:
     """
     Calculates a moving average crossover strategy on a given DataFrame.
-    This function computes two simple moving averages (SMA) for the 'Close' price column using specified fast and slow periods. It generates trading signals based on the crossover of these moving averages.
+    This function computes two simple moving averages (SMA) for the 'Close' price column using specified fast and slow
+    periods. It generates trading signals based on the crossover of these moving averages.
     
     Parameters:
         df (pd.DataFrame): Input DataFrame containing at least a 'Close' column with price data.
@@ -22,7 +23,8 @@ def moving_average_crossover(
         pd.DataFrame: A copy of the input DataFrame with the following additional columns:
             - 'SMA_fast': Fast period simple moving average of 'Close'.
             - 'SMA_slow': Slow period simple moving average of 'Close'.
-            - 'Signal': Signal indicating a crossover event (1 for bullish crossover, -1 for bearish crossover, 0 otherwise).
+            - 'Signal': Signal indicating a crossover event (1 for bullish crossover, -1 for bearish crossover, 0
+                        otherwise).
     """
     price_col = df[column]
     

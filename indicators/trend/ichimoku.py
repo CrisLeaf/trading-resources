@@ -14,7 +14,9 @@ def ichimoku_cloud(
     ) -> pd.DataFrame:
     """
     Calculates the Ichimoku Cloud indicator for a given DataFrame.
-    The Ichimoku Cloud is a comprehensive technical indicator that defines support and resistance, identifies trend direction, gauges momentum, and provides trading signals. It consists of five lines: Tenkan-sen, Kijun-sen, Senkou Span A, Senkou Span B, and Chikou Span.
+    The Ichimoku Cloud is a comprehensive technical indicator that defines support and resistance, identifies trend
+    direction, gauges momentum, and provides trading signals. It consists of five lines: Tenkan-sen, Kijun-sen, Senkou
+    Span A, Senkou Span B, and Chikou Span.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
@@ -81,12 +83,6 @@ if __name__ == '__main__':
     # Cruce Tenkan/Kijun
     tenkan_cross_up = ichimoku['Tenkan-sen'] > ichimoku['Kijun-sen']
     tenkan_cross_down = ichimoku['Tenkan-sen'] < ichimoku['Kijun-sen']
-
-    # # Buy Signal
-    # df['Buy_Signal'] = (above_cloud) & (tenkan_cross_up) & (tenkan_cross_up.shift(1) == False)
-    # # Sell Signal
-    # df['Sell_Signal'] = (below_cloud) & (tenkan_cross_down) & (tenkan_cross_down.shift(1) == False)
-
 
     # Plots
     fig = go.Figure()

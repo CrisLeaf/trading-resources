@@ -1,4 +1,5 @@
 .env
+.venv/
 
 pyenv3-12/
 workbench/

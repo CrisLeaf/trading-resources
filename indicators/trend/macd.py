@@ -9,8 +9,11 @@ def macd_index(
         column: str = 'Close'
     ) -> pd.DataFrame:
     """
-    Calculates the Moving Average Convergence Divergence (MACD) and related indicators (MACD line, Signal line, Histogram) for a given DataFrame.
-    The MACD is a trend-following momentum indicator that shows the relationship between two moving averages of a security’s price. It consists of the MACD line (difference between fast and slow EMAs), the Signal line (EMA of the MACD line), and the Histogram (difference between MACD and Signal lines).
+    Calculates the Moving Average Convergence Divergence (MACD) and related indicators (MACD line, Signal line,
+    Histogram) for a given DataFrame.
+    The MACD is a trend-following momentum indicator that shows the relationship between two moving averages of a
+    security’s price. It consists of the MACD line (difference between fast and slow EMAs), the Signal line (EMA of the
+    MACD line), and the Histogram (difference between MACD and Signal lines).
     
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.

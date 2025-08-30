@@ -13,7 +13,8 @@ def cci_index(
     ) -> pd.Series:
     """
     Calculates the Commodity Channel Index (CCI) for a given DataFrame.
-    The CCI is a technical indicator used to identify overbought and oversold levels in the price of an asset. It evaluates the direction and strength of the price trend, helping traders determine when to enter or exit a trade.
+    The CCI is a technical indicator used to identify overbought and oversold levels in the price of an asset. It
+    evaluates the direction and strength of the price trend, helping traders determine when to enter or exit a trade.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
