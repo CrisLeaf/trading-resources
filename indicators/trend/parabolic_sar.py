@@ -12,7 +12,9 @@ def parabolic_sar(
     ) -> pd.DataFrame:
     """
     Calculates the Parabolic SAR (Stop and Reverse) indicator for a given DataFrame.
-    The Parabolic SAR is a trend-following indicator used to determine potential reversal points in the price direction of an asset. It helps traders identify entry and exit points by plotting dots above or below the price, indicating the direction of the trend.
+    The Parabolic SAR is a trend-following indicator used to determine potential reversal points in the price direction
+    of an asset. It helps traders identify entry and exit points by plotting dots above or below the price, indicating
+    the direction of the trend.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
@@ -25,7 +27,9 @@ def parabolic_sar(
     Returns:
         pd.DataFrame: DataFrame with columns for PSAR, UpTrend, and DownTrend.
     """
-    high, low, close = df[high_column].to_numpy().copy(), df[low_column].to_numpy().copy(), df[close_column].to_numpy().copy()
+    high = df[high_column].to_numpy().copy()
+    low = df[low_column].to_numpy().copy()
+    close = df[close_column].to_numpy().copy()
     psar_up, psar_down = np.repeat(np.nan, len(df)), np.repeat(np.nan, len(df))
 
     # Initialization

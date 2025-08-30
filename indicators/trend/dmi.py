@@ -12,7 +12,9 @@ def directional_movement_index(
     ) -> pd.DataFrame:
     """
     Calculates the Directional Movement Index (DMI) and related indicators (ADX, +DI, -DI) for a given DataFrame.
-    The DMI is a technical indicator used to assess the strength and direction of a trend in price data. It consists of the Positive Directional Indicator (+DI), Negative Directional Indicator (-DI), and the Average Directional Index (ADX).
+    The DMI is a technical indicator used to assess the strength and direction of a trend in price data. It consists of
+    the Positive Directional Indicator (+DI), Negative Directional Indicator (-DI), and the Average Directional Index
+    (ADX).
     
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
