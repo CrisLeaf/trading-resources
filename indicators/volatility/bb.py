@@ -10,7 +10,9 @@ def bollinger_bands(
     ) -> pd.DataFrame:
     """
     Calculates the Bollinger Bands for a given DataFrame.
-    Bollinger Bands are a volatility indicator consisting of a middle band (simple moving average), an upper band, and a lower band. The upper and lower bands are calculated as a specified number of standard deviations above and below the moving average, helping to identify overbought and oversold conditions.
+    Bollinger Bands are a volatility indicator consisting of a middle band (simple moving average), an upper band,
+    and a lower band. The upper and lower bands are calculated as a specified number of standard deviations above and
+    below the moving average, helping to identify overbought and oversold conditions.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
@@ -35,3 +37,72 @@ def bollinger_bands(
         "Bollinger_Upper": upper_band,
         "Bollinger_Lower": lower_band
     })
+
+
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    df = yf.download('USDCLP=X', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
+
+    bb = bollinger_bands(df)
+
+    # Plots
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=df['Close'],
+            mode='lines',
+            line=dict(color='skyblue', width=1),
+            name='Close'
+        )
+    )
+
+    # Signals
+    fig.add_trace(
+        go.Scatter(
+            y=bb['Bollinger_Mid'],
+            x=bb.index,
+            mode='lines',
+            line=dict(color='coral'),
+            name='Bollinger Mid'
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            y=bb['Bollinger_Lower'],
+            x=bb.index,
+            mode='lines',
+            line=dict(color='grey', dash='dash'),
+            name='Bollinger Lower'
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            y=bb['Bollinger_Upper'],
+            x=bb.index,
+            mode='lines',
+            line=dict(color='grey', dash='dash'),
+            name='Bollinger Upper'
+        )
+    )
+
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=600,
+        width=1000
+    )
+
+    fig.show()
+

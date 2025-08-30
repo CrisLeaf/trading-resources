@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def super_trend(
@@ -12,7 +12,8 @@ def super_trend(
     ) -> pd.DataFrame:
     """
     Calculates the SuperTrend indicator for a given DataFrame.
-    The SuperTrend is a trend-following indicator that uses the Average True Range (ATR) to determine dynamic support and resistance levels. It helps identify the current trend direction and potential entry or exit points.
+    The SuperTrend is a trend-following indicator that uses the Average True Range (ATR) to determine dynamic support
+    and resistance levels. It helps identify the current trend direction and potential entry or exit points.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
@@ -35,7 +36,7 @@ def super_trend(
     atr = tr.ewm(alpha=1/period, min_periods=period, adjust=False).mean()
 
     # Classic Bands
-    hl2 = (high + low) / 2
+    hl2 = ((high + low) / 2).shift(1)
     upper_band = hl2 + multiplier * atr
     lower_band = hl2 - multiplier * atr
 
@@ -71,3 +72,57 @@ def super_trend(
         'UpperBand': final_upper,
         'LowerBand': final_lower
     }, index=df.index)
+
+
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+
+    df = yf.download('USDCLP=X', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
+
+    st = super_trend(df)
+
+    # Plots
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['Close'],
+        mode='lines',
+        line=dict(color='skyblue', width=1),
+        name='Close'
+    ))
+    fig.add_trace(
+        go.Scatter(
+            x=st.index,
+            y=st['UpperBand'],
+            mode='lines',
+            line=dict(color='red', width=2),
+            name='ST Upper Band'
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=st.index,
+            y=st['LowerBand'],
+            mode='lines',
+            line=dict(color='green', width=2),
+            name='ST Lower Band'
+        )
+    )
+
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=600,
+        width=1000
+    )
+
+    fig.show()

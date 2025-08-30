@@ -11,7 +11,9 @@ def turtle_trading_channels(
     ) -> pd.DataFrame:
     """
     Calculates the Turtle Trading Channels (TTC) for a given DataFrame.
-    The Turtle Trading Channels are a trend-following breakout system that uses the highest high and lowest low over specified entry and exit periods to generate buy, sell, and exit signals. This indicator helps identify trend initiation and reversal points based on price channel breakouts.
+    The Turtle Trading Channels are a trend-following breakout system that uses the highest high and lowest low over
+    specified entry and exit periods to generate buy, sell, and exit signals. This indicator helps identify trend
+    initiation and reversal points based on price channel breakouts.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing price data.
@@ -21,7 +23,8 @@ def turtle_trading_channels(
         low_column (str, optional): Name of the column containing low prices. Default is 'Low'.
 
     Returns:
-        pd.DataFrame: DataFrame with columns for Upper, Lower, Trend Line, Exit Line, Buy Signal, Sell Signal, Buy Exit, Sell Exit, and bar count signals (o1, o2, o3, o4, e1, e2, e3, e4).
+        pd.DataFrame: DataFrame with columns for Upper, Lower, Trend Line, Exit Line, Buy Signal, Sell Signal, Buy
+                      Exit, Sell Exit, and bar count signals (o1, o2, o3, o4, e1, e2, e3, e4).
     """
     high, low = df[high_column], df[low_column]
 
@@ -86,3 +89,71 @@ def turtle_trading_channels(
     tdc = pd.concat([tdc, signals_df], axis=1)
 
     return tdc
+
+
+if __name__ == '__main__':
+    import yfinance as yf
+    import plotly.graph_objects as go
+
+    df = yf.download('USDCLP=X', start='2024-01-01')
+    df.columns = df.columns.droplevel(1)
+
+    ttc = turtle_trading_channels(df)
+
+    # Plots
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=df['Close'],
+            mode='lines',
+            line=dict(color='skyblue', width=1),
+            name='Close'
+        )
+    )
+
+    # Signals
+    fig.add_trace(
+        go.Scatter(
+            x=ttc.index,
+            y=ttc['Upper'].where(ttc['Trend Line'] == ttc['Upper'], np.nan),
+            mode='lines',
+            line=dict(color='red', width=1),
+            name='Upper'
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=ttc.index,
+            y=ttc['Lower'].where(ttc['Trend Line'] == ttc['Lower'], np.nan),
+            mode='lines',
+            line=dict(color='green', width=1),
+            name='Lower'
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=ttc.index,
+            y=ttc['Exit Line'],
+            mode='lines',
+            line=dict(color='grey', width=1),
+            name='Exit Line'
+        )
+    )
+
+    fig.update_layout(
+        template='plotly_dark',
+        title='Signals Plot',
+        xaxis_title='Date',
+        yaxis_title='Price',
+        xaxis_rangeslider_visible=False,
+        plot_bgcolor='rgb(20, 20, 20)',
+        paper_bgcolor='rgb(20, 20, 20)',
+        font=dict(color='white'),
+        height=600,
+        width=1000
+    )
+
+    fig.show()
+
