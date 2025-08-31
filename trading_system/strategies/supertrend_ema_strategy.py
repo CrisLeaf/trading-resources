@@ -294,7 +294,7 @@ class SuperTrendEMAStrategy(BaseStrategy):
         fig.add_trace(
             go.Scatter(
                 x=buy_entries.index,
-                y=buy_entries * 0.95,
+                y=buy_entries,
                 mode='markers',
                 marker=dict(symbol='triangle-up', color='green', size=18),
                 name='Buy Signal'
@@ -303,7 +303,7 @@ class SuperTrendEMAStrategy(BaseStrategy):
         fig.add_trace(
             go.Scatter(
                 x=sell_entries.index,
-                y=sell_entries * 1.05,
+                y=sell_entries,
                 mode='markers',
                 marker=dict(symbol='triangle-down', color='red', size=18),
                 name='Sell Signal'
