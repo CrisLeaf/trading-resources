@@ -24,7 +24,7 @@ def super_trend(
         close_column (str, optional): Name of the column containing close prices. Default is 'Close'.
 
     Returns:
-        pd.DataFrame: DataFrame with columns for SuperTrend, ST_direction, UpperBand, and LowerBand.
+        pd.DataFrame: DataFrame with columns for SuperTrend, ST_Direction, UpperBand, and LowerBand.
     """
     high, low, close = df[high_column], df[low_column], df[close_column]
     
@@ -68,7 +68,7 @@ def super_trend(
 
     return pd.DataFrame({
         'SuperTrend': st,
-        'ST_direction': direction,
+        'ST_Direction': direction,
         'UpperBand': final_upper,
         'LowerBand': final_lower
     }, index=df.index)
