@@ -34,6 +34,9 @@ class SuperTrendEMAStrategy(BaseStrategy):
 
     This approach helps filter out false signals by requiring agreement between a trend direction (SuperTrend)
     and momentum (EMA cross).
+
+    Unlike trading strategies, this method does not aim to buy and sell frequently. Instead, it filters the timing
+    of USD purchases to accumulate progressively during uptrends, while avoiding unfavorable periods.
     """
     def __init__(
             self,
@@ -93,19 +96,26 @@ class SuperTrendEMAStrategy(BaseStrategy):
         self.data['EMA_Long'] = ema_long
 
         # Signals
-        self.data['ST_Buy'] = (self.data['ST_Direction'] == 1) & (self.data['ST_Direction'].shift(1) != 1)
-        self.data['ST_Sell'] = (self.data['ST_Direction'] == -1) & (self.data['ST_Direction'].shift(1) != -1)
-        self.data['EMA_Buy'] = (
-                (self.data['EMA_Short'] > self.data['EMA_Long']) &
-                (self.data['EMA_Short'].shift(1) <= self.data['EMA_Long'].shift(1))
-        )
-        self.data['EMA_Sell'] = (
-                (self.data['EMA_Short'] < self.data['EMA_Long']) &
-                (self.data['EMA_Short'].shift(1) >= self.data['EMA_Long'].shift(1))
-        )
+        # PREVIOUS
+        # self.data['ST_Buy'] = (self.data['ST_Direction'] == 1) & (self.data['ST_Direction'].shift(1) != 1)
+        # self.data['ST_Sell'] = (self.data['ST_Direction'] == -1) & (self.data['ST_Direction'].shift(1) != -1)
+        # self.data['EMA_Buy'] = (
+        #         (self.data['EMA_Short'] > self.data['EMA_Long']) &
+        #         (self.data['EMA_Short'].shift(1) <= self.data['EMA_Long'].shift(1))
+        # )
+        # self.data['EMA_Sell'] = (
+        #         (self.data['EMA_Short'] < self.data['EMA_Long']) &
+        #         (self.data['EMA_Short'].shift(1) >= self.data['EMA_Long'].shift(1))
+        # )
+        # self.data['Buy_Signal'] = self.data['ST_Buy'] & self.data['EMA_Buy']
+        # self.data['Sell_Signal'] = self.data['ST_Sell'] & self.data['EMA_Sell']
 
-        self.data['Buy_Signal'] = self.data['ST_Buy'] & self.data['EMA_Buy']
-        self.data['Sell_Signal'] = self.data['ST_Sell'] & self.data['EMA_Sell']
+        self.data['ST_Buy'] = (self.data['ST_Direction'] == 1)
+        self.data['ST_Sell'] = (self.data['ST_Direction'] == -1)
+        self.data['EMA_Buy'] = self.data['EMA_Short'] > self.data['EMA_Long']
+        self.data['EMA_Sell'] = self.data['EMA_Short'] < self.data['EMA_Long']
+        self.data['Buy_Signal'] = self.data['ST_Buy'] | self.data['EMA_Buy']
+        self.data['Sell_Signal'] = self.data['ST_Sell'] | self.data['EMA_Sell']
 
         # Direction
         self.data['Direction'] = self.data['Buy_Signal'].astype(int) + self.data['Sell_Signal'].astype(int) * -1
@@ -364,11 +374,12 @@ if __name__ == "__main__":
     
     # Optimize
     params_grid = {
-        'st_period': np.arange(2, 41).tolist(),
-        'st_multiplier': [round(x, 1) for x in np.arange(1.0, 8.0, 0.1).tolist()],
-        'ema_short_period': np.arange(2, 41).tolist(),
-        'ema_long_period': np.arange(20, 61).tolist()
+        'st_period': list(range(2, 41, 2)),
+        'st_multiplier': list(np.arange(1.0, 8.1, 0.2)),
+        'ema_short_period': list(range(2, 61, 4)),
+        'ema_long_period': list(range(20, 101, 5))
     }
+
     
     best_params = strategy.optimize(params_grid, n_iter=50_000)
 
@@ -389,7 +400,7 @@ if __name__ == "__main__":
     print()
     
     # Plot
-    strategy.plot(last_entries=252 * 5)
+    strategy.plot(last_entries=252 * 10)
 
     # Write Excel
     strategy.save_to_excel()
