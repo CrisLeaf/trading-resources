@@ -13,27 +13,21 @@ sys.path.append(ROOT)
 
 # from strategies.base_strategy import BaseStrategy
 from base_strategy import BaseStrategy
-from indicators.advanced.st import super_trend
 from indicators.trend.ema import exponential_moving_average
+from indicators.momentum.rsi import relative_strength_index
+from indicators.momentum.stochrsi import stochastic_rsi
+from indicators.volatility.atr import average_true_range
 
 
-class SuperTrendEMAStrategy(BaseStrategy):
+class TrendReversalATRStrategy(BaseStrategy):
     """
-    Strategy combining SuperTrend and EMA Crossovers.
-    This strategy uses a trend-following approach based on the SuperTrend indicator and confirmation from
-    EMA crossovers:
+    **This implementation only works for Long Trading**
+    Implements a trend reversal trading strategy using technical indicators.
 
-    - SuperTrend: determines the prevailing market trend. A buy signal occurs when the trend switches to bullish
-                  (ST_Direction == 1), and a sell signal when it switches to bearish (ST_Direction == -1).
-    - EMA Crossovers: uses two EMAs (short and long periods) to confirm trend changes. A bullish crossover occurs
-                      when EMA_Short crosses above EMA_Long, and a bearish crossover when EMA_Short crosses
-                      below EMA_Long.
-    - Combined Signals: a trade is triggered only when both SuperTrend and EMA conditions align:
-        - Buy_Signal: SuperTrend turns bullish AND short EMA crosses above long EMA.
-        - Sell_Signal: SuperTrend turns bearish AND short EMA crosses below long EMA.
-
-    This approach helps filter out false signals by requiring agreement between a trend direction (SuperTrend)
-    and momentum (EMA cross).
+    This class is designed to execute a trading strategy that analyzes trends in a given market dataset.
+    Key indicators used include Exponential Moving Averages (EMA), Relative Strength Index (RSI),
+    Stochastic RSI, and Average True Range (ATR). It provides methods to calculate trading signals,
+    evaluate performance metrics, and optimize strategy parameters for better results.
     """
     def __init__(
             self,
@@ -43,15 +37,17 @@ class SuperTrendEMAStrategy(BaseStrategy):
             random_seed: int = None
         ):
         default_params = {
-            'st_period': 10,
-            'st_multiplier': 3.0,
-            'st_high_column': 'High',
-            'st_low_column': 'Low',
-            'st_close_column': 'Close',
-            'ema_short_period': 10,
-            'ema_short_column': 'Close',
-            'ema_long_period': 50,
-            'ema_long_column': 'Close'
+            'ema_short_period': 50,
+            'ema_long_period': 200,
+            'rsi_period': 14,
+            'stochrsi_rsi_period': 14,
+            'stochrsi_stoch_period': 14,
+            'stochrsi_smooth_k': 3,
+            'stochrsi_smooth_d': 3,
+            'atr_period': 14,
+            'high_column': 'High',
+            'low_column': 'Low',
+            'close_column': 'Close'
         }
         self.optimized_params = None
         
@@ -62,50 +58,69 @@ class SuperTrendEMAStrategy(BaseStrategy):
 
     def calculate_signals(self) -> Dict[str, Any]:
         """
-        Calculates trading signals based on the combination of SuperTrend and EMA crossovers.
-        This function computes the SuperTrend indicator and short/long EMAs, then generates buy and sell signals when
-        both conditions are met. It also determines the current market direction (bullish, bearish, or neutral) based
-        on the latest signals and returns it as a dictionary.
+        Calculates trading signals and trends based on technical indicators applied to market
+        data.
+        This method incorporates various technical indicators such as EMA (Exponential Moving
+        Averages), RSI (Relative Strength Index), Stochastic RSI, and ATR (Average True Range)
+        to generate buy and sell signals. It integrates stop-loss and take-profit computations
+        to finalize the trading logic and determine current market trends.
         """
-        st = super_trend(
-            df=self.data,
-            period=self.params['st_period'],
-            multiplier=self.params['st_multiplier'],
-            high_column=self.params['st_high_column'],
-            low_column=self.params['st_low_column'],
-            close_column=self.params['st_close_column'],
-        )
         ema_short = exponential_moving_average(
             df=self.data,
             period=self.params['ema_short_period'],
-            column=self.params['ema_short_column'],
+            column=self.params['close_column']
         )
         ema_long = exponential_moving_average(
             df=self.data,
             period=self.params['ema_long_period'],
-            column=self.params['ema_long_column'],
+            column=self.params['close_column']
         )
-        self.data['SuperTrend'] = st['SuperTrend']
-        self.data['ST_Direction'] = st['ST_Direction']
-        self.data['UpperBand'] = st['UpperBand']
-        self.data['LowerBand'] = st['LowerBand']
+        rsi = relative_strength_index(
+            df=self.data,
+            period=self.params['rsi_period'],
+            column=self.params['close_column']
+        )
+        stochrsi = stochastic_rsi(
+            df=self.data,
+            rsi_period=self.params['stochrsi_rsi_period'],
+            stoch_period=self.params['stochrsi_stoch_period'],
+            smooth_k=self.params['stochrsi_smooth_k'],
+            smooth_d=self.params['stochrsi_smooth_d'],
+            column=self.params['close_column']
+        )
+        atr = average_true_range(
+            df=self.data,
+            period=self.params['atr_period'],
+            high_column=self.params['high_column'],
+            low_column=self.params['low_column'],
+            close_column=self.params['close_column']
+        )
         self.data['EMA_Short'] = ema_short
         self.data['EMA_Long'] = ema_long
+        self.data['RSI'] = rsi
+        self.data['StochRSI'] = stochrsi['StochRSI']
+        self.data['StochRSI_K'] = stochrsi['StochRSI_K']
+        self.data['StochRSI_D'] = stochrsi['StochRSI_D']
+        self.data['ATR'] = atr
+        self.data['Last_Buy_price'] = np.nan
 
-        # Signals
-        self.data['ST_Buy'] = (self.data['ST_Direction'] == 1) & (self.data['ST_Direction'].shift(1) != 1)
-        self.data['ST_Sell'] = (self.data['ST_Direction'] == -1) & (self.data['ST_Direction'].shift(1) != -1)
-        self.data['EMA_Buy'] = (
-                (self.data['EMA_Short'] > self.data['EMA_Long']) &
-                (self.data['EMA_Short'].shift(1) <= self.data['EMA_Long'].shift(1))
+        self.data['Buy_Signal'] = (
+            (self.data['EMA_Short'] > self.data['EMA_Long']) &
+            # (self.data['RSI'] < 50) &
+            # (self.data['StochRSI_K'] < 20) &
+            (self.data['StochRSI_K'] > self.data['StochRSI_D'])
         )
-        self.data['EMA_Sell'] = (
-                (self.data['EMA_Short'] < self.data['EMA_Long']) &
-                (self.data['EMA_Short'].shift(1) >= self.data['EMA_Long'].shift(1))
-        )
+        self.data['Buy_Signal'] = np.random.rand(len(self.data)) <= 0.5
+        self.data.loc[self.data['Buy_Signal'], 'Last_Buy_price'] = self.data['Close']
+        self.data['Last_Buy_price'] = self.data['Last_Buy_price'].ffill()
 
-        self.data['Buy_Signal'] = self.data['ST_Buy'] & self.data['EMA_Buy']
-        self.data['Sell_Signal'] = self.data['ST_Sell'] & self.data['EMA_Sell']
+        self.data['Stop_Loss'] = self.data['Last_Buy_price'] - 1.5 * self.data['ATR']
+        self.data['Take_Profit'] = self.data['Last_Buy_price'] + 2 * self.data['ATR']
+
+        self.data['Sell_Signal'] = (
+            (self.data['Close'] <= self.data['Stop_Loss']) |
+            (self.data['Close'] >= self.data['Take_Profit'])
+        )
 
         # Direction
         self.data['Direction'] = self.data['Buy_Signal'].astype(int) + self.data['Sell_Signal'].astype(int) * -1
@@ -143,7 +158,7 @@ class SuperTrendEMAStrategy(BaseStrategy):
                     df.loc[df.index[i], 'Position'] = 0
             else:
                 df.loc[df.index[i], 'Position'] = df['Position'].iloc[i-1]
-        
+
         self.data['Position'] = df['Position']
         
         # Returns
@@ -227,7 +242,7 @@ class SuperTrendEMAStrategy(BaseStrategy):
 
         return best_params
     
-    def save_to_excel(self, filename: str = "SuperTrendEMAStrategy_metrics.xlsx"):
+    def save_to_excel(self, filename: str = "TrendReversalATR_metrics.xlsx"):
         """
         Saves data and optimized parameters to an Excel file.
         The method writes the strategy's data and its optimized parameters to an Excel file using two
@@ -242,9 +257,18 @@ class SuperTrendEMAStrategy(BaseStrategy):
 
     def plot(self, *args, **kwargs):
         """
-        Plot price, SuperTrend bands, buy/sell signals, and the strategy equity curve.
-        Visualizes the main price series with SuperTrend upper/lower bands, marks trade entries and exits,
-        and displays the corresponding equity curve on a separate panel.
+        Plots price data with buy and sell signals along with an equity curve.
+        This method creates a two-row visualization where:
+        1. The top row includes the price data with buy and sell entries marked
+           using specific symbols.
+        2. The bottom row represents the equity curve over time.
+
+        Parameters:
+        args
+            Positional arguments passed to the function. This is unused in the current implementation.
+        kwargs
+            Keyword arguments where `last_entries` is expected to specify the
+            number of most recent data points to include in the plot.
         """
         plot_data = self.data.copy()[-kwargs['last_entries']: ]
         position_diff = plot_data['Position'].diff().fillna(0)
@@ -272,25 +296,6 @@ class SuperTrendEMAStrategy(BaseStrategy):
             ), row=1, col=1
         )
 
-        # Signals
-        fig.add_trace(
-            go.Scatter(
-                x=self.data.index,
-                y=self.data['UpperBand'],
-                mode='lines',
-                line=dict(color='red', width=2),
-                name='ST Upper Band'
-            )
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=self.data.index,
-                y=self.data['LowerBand'],
-                mode='lines',
-                line=dict(color='green', width=2),
-                name='ST Lower Band'
-            )
-        )
         fig.add_trace(
             go.Scatter(
                 x=buy_entries.index,
@@ -341,12 +346,13 @@ class SuperTrendEMAStrategy(BaseStrategy):
     
 if __name__ == "__main__":
     import yfinance as yf
+    import numpy as np
 
     # Obtener Datos
-    df = yf.download('USDCLP=X', start='2024-01-01', interval='1d')
+    df = yf.download('USDCLP=X', start='2020-01-01', interval='1d')
     df.columns = df.columns.droplevel(1)
 
-    strategy = SuperTrendEMAStrategy(df)
+    strategy = TrendReversalATRStrategy(df)
     current_trend = strategy.calculate_signals()
 
     print(strategy.data['Direction'].value_counts())
@@ -361,16 +367,21 @@ if __name__ == "__main__":
     print('Sharpe Ratio:', round(performance_dict['Sharpe Ratio'], 4))
     print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
     print()
-    
+
     # Optimize
     params_grid = {
-        'st_period': np.arange(2, 41).tolist(),
-        'st_multiplier': [round(x, 1) for x in np.arange(1.0, 8.0, 0.1).tolist()],
-        'ema_short_period': np.arange(2, 41).tolist(),
-        'ema_long_period': np.arange(20, 61).tolist()
+        'ema_short_period': list(range(20, 101, 20)),
+        'ema_long_period': list(range(100, 301, 50)),
+        # 'rsi_period': [7, 14, 21],
+        'stochrsi_rsi_period': [7, 14, 21],
+        'stochrsi_stoch_period': [7, 14, 21],
+        'stochrsi_smooth_k': [2, 3, 4],
+        'stochrsi_smooth_d': [2, 3, 4],
+        'atr_period': list(range(4, 21, 2)),
+        # 'atr_period': [7, 14, 21],
     }
-    
-    best_params = strategy.optimize(params_grid, n_iter=50_000)
+
+    best_params = strategy.optimize(params_grid, n_iter=1_000)
 
     print("Best Parameters:")
     print(best_params)
@@ -380,16 +391,16 @@ if __name__ == "__main__":
     strategy.set_params(best_params)
     strategy.calculate_signals()
     performance_dict = strategy.evaluate_performance()
-    
+
     print()
     print('Total Return:', round(performance_dict['Total Return'], 4))
     print('CAGR:', round(performance_dict['CAGR'], 4))
     print('Sharpe Ratio:', round(performance_dict['Sharpe Ratio'], 4))
     print('Max Drawdown:', round(performance_dict['Max Drawdown'], 4))
     print()
-    
+
     # Plot
-    strategy.plot(last_entries=252 * 5)
+    strategy.plot(last_entries=252 * 10)
 
     # Write Excel
     strategy.save_to_excel()
